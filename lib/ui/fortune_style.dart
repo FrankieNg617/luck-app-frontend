@@ -22,7 +22,7 @@ class FortuneTheme {
   static const coral = Color(0xFFEB7047);
   static const sage = Color(0xFF75A385);
 
-  static const radius = 16.0;
+  static const radius = 13.0;
 
   static const gradientGold = LinearGradient(
     begin: Alignment.topLeft,
@@ -50,16 +50,16 @@ class FortuneTheme {
 
   static const shadowSoft = [
     BoxShadow(
-      blurRadius: 20,
-      spreadRadius: -4,
-      offset: Offset(0, 4),
-      color: Color(0x26A57533),
+      blurRadius: 28,
+      spreadRadius: -8,
+      offset: Offset(0, 6),
+      color: Color(0x1FA57533),
     ),
   ];
 
   static const shadowGoldGlow = [
     BoxShadow(
-      blurRadius: 18,
+      blurRadius: 28,
       spreadRadius: -2,
       offset: Offset(0, 6),
       color: Color(0x33A57533),
@@ -76,7 +76,7 @@ class FortuneTheme {
       color: useCardGradient ? null : (backgroundColor ?? card),
       gradient: useCardGradient ? gradientCard : null,
       borderRadius: BorderRadius.circular(radius * 1.25),
-      border: Border.all(color: (borderColor ?? border).withValues(alpha: 180), width: 0.05),
+      border: Border.all(color: (borderColor ?? border).withValues(alpha: 80), width: 0.6),
       boxShadow: shadows ?? shadowSoft,
     );
   }
@@ -95,16 +95,16 @@ class FortuneTheme {
       ),
     );
 
-    final inter = GoogleFonts.interTextTheme(base.textTheme);
+    //final inter = GoogleFonts.interTextTheme(base.textTheme);
 
     // Headings use Playfair Display (your "font-display")
     return base.copyWith(
-      textTheme: inter.copyWith(
-        headlineSmall: GoogleFonts.playfairDisplay(textStyle: inter.headlineSmall),
-        headlineMedium: GoogleFonts.playfairDisplay(textStyle: inter.headlineMedium),
-        headlineLarge: GoogleFonts.playfairDisplay(textStyle: inter.headlineLarge),
-        titleLarge: GoogleFonts.playfairDisplay(textStyle: inter.titleLarge),
-        titleMedium: GoogleFonts.playfairDisplay(textStyle: inter.titleMedium),
+      textTheme: base.textTheme.copyWith(
+        headlineSmall: GoogleFonts.playfairDisplay(textStyle: base.textTheme.headlineSmall),
+        headlineMedium: GoogleFonts.playfairDisplay(textStyle: base.textTheme.headlineMedium),
+        headlineLarge: GoogleFonts.playfairDisplay(textStyle: base.textTheme.headlineLarge),
+        titleLarge: GoogleFonts.playfairDisplay(textStyle: base.textTheme.titleLarge),
+        titleMedium: GoogleFonts.playfairDisplay(textStyle: base.textTheme.titleMedium),
       ),
     );
   }

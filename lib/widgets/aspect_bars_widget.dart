@@ -27,19 +27,34 @@ class AspectBarsWidget extends StatelessWidget {
       _Aspect("Fortune", fortune, FortuneTheme.goldDark, Icons.paid_outlined),
     ];
 
-    // No card / no outline
+    // How much lower you want the whole group to sit
+    const double drop = 22;
+
     return SizedBox(
-      height: 144,
-      child: Row(
-        children: List.generate(aspects.length, (i) {
-          final a = aspects[i];
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: _AspectBarItem(aspect: a),
+      // Increase container height so we can move content down without compressing it
+      height: 144 + drop,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: drop,     // 👈 pushes everything down visually
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(aspects.length, (i) {
+                final a = aspects[i];
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: _AspectBarItem(aspect: a),
+                  ),
+                );
+              }),
             ),
-          );
-        }),
+          ),
+        ],
       ),
     );
   }
@@ -105,8 +120,8 @@ class _AspectBarItem extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: aspect.color.withOpacity(0.9),
                       borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(10),
-                        topRight: Radius.circular(10),
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
                       ),
                     ),
                   ),

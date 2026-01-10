@@ -44,7 +44,7 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 children: [
                   const HeaderWidget(),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 18),
 
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,10 +63,10 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 27),
                   LifeAdviceWidget(advice: advice),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 15),
                   LuckyItemsWidget(
                     food: food,
                     numbers: numbers,
@@ -74,13 +74,13 @@ class HomeScreen extends StatelessWidget {
                     time: time,
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 15),
                   DosDontsWidget(dos: dos, donts: donts),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 15),
                   DailyTasksWidget(initialTasks: tasks),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 15),
                 ],
               ),
             ),

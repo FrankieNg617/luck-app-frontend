@@ -55,7 +55,7 @@ class _DoDontCard extends StatelessWidget {
     return Container(
       // ✅ Make sure the card is willing to fill available height
       constraints: const BoxConstraints(minHeight: double.infinity),
-      decoration: FortuneTheme.cardDecoration(borderColor: tint.withOpacity(0.25)),
+      decoration: FortuneTheme.cardDecoration(),
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
