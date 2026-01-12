@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../ui/fortune_style.dart';
 import '../widgets/header_widget.dart';
 import '../widgets/overall_score_widget.dart';
 import '../widgets/aspect_bars_widget.dart';
@@ -7,6 +6,7 @@ import '../widgets/life_advice_widget.dart';
 import '../widgets/lucky_items_widget.dart';
 import '../widgets/dos_donts_widget.dart';
 import '../widgets/daily_tasks_widget.dart';
+import '../background/galaxy_background_comic.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -34,58 +34,57 @@ class HomeScreen extends StatelessWidget {
     final time = "8AM-10AM";
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: FortuneTheme.gradientWarm),
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                children: [
-                  const HeaderWidget(),
-                  const SizedBox(height: 18),
+      body: GalaxyBackgroundComic(
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  children: [
+                    const HeaderWidget(),
+                    const SizedBox(height: 8),
 
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      OverallScoreWidget(score: overall),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: AspectBarsWidget(
-                          career: career,
-                          study: study,
-                          love: love,
-                          social: social,
-                          fortune: fortune,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        OverallScoreWidget(score: overall),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: AspectBarsWidget(
+                            career: career,
+                            study: study,
+                            love: love,
+                            social: social,
+                            fortune: fortune,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 27),
-                  LifeAdviceWidget(advice: advice),
+                    const SizedBox(height: 12),
+                    LifeAdviceWidget(advice: advice),
 
-                  const SizedBox(height: 15),
-                  LuckyItemsWidget(
-                    food: food,
-                    numbers: numbers,
-                    colour: colour,
-                    time: time,
-                  ),
+                    const SizedBox(height: 12),
+                    LuckyItemsWidget(
+                      food: food,
+                      numbers: numbers,
+                      colour: colour,
+                      time: time,
+                    ),
 
-                  const SizedBox(height: 15),
-                  DosDontsWidget(dos: dos, donts: donts),
+                    const SizedBox(height: 12),
+                    DosDontsWidget(dos: dos, donts: donts),
 
-                  const SizedBox(height: 15),
-                  DailyTasksWidget(initialTasks: tasks),
+                    const SizedBox(height: 12),
+                    DailyTasksWidget(initialTasks: tasks),
 
-                  const SizedBox(height: 15),
-                ],
+                    const SizedBox(height: 18),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
       ),
     );
   }

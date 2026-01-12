@@ -108,7 +108,7 @@ class _AspectBarItem extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: FortuneTheme.foreground,
+                          color: const Color.fromARGB(255, 255, 255, 255), // Color of scores
                         ),
                       ),
                     ),
@@ -160,7 +160,7 @@ class _AspectBarItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: FortuneTheme.mutedForeground,
+                color: const Color.fromARGB(255, 206, 203, 203), // Color of aspect text
               ),
             ),
           ),

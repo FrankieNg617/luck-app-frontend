@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FortuneTheme {
-  // Token-ish colors (matches your Tailwind theme intent)
   static const background = Color(0xFFFCFAF8);
   static const foreground = Color(0xFF32241B);
+
+  static double cardOpacity = 0.4;
+  static double borderOpacity = 0.05;
 
   static const card = Color(0xFFFAF8F4);
   static const border = Color(0xFFE8E2D9);
@@ -67,19 +69,27 @@ class FortuneTheme {
   ];
 
   static BoxDecoration cardDecoration({
-    bool useCardGradient = false,
     Color? borderColor,
-    Color? backgroundColor,
-    List<BoxShadow>? shadows,
+    double? opacityOverride,
   }) {
+    final fillOpacity = opacityOverride ?? cardOpacity;
+
     return BoxDecoration(
-      color: useCardGradient ? null : (backgroundColor ?? card),
-      gradient: useCardGradient ? gradientCard : null,
-      borderRadius: BorderRadius.circular(radius * 1.25),
-      border: Border.all(color: (borderColor ?? border).withValues(alpha: 80), width: 0.6),
-      boxShadow: shadows ?? shadowSoft,
-    );
-  }
+    // ✅ controlled transparency
+    color: fillOpacity == 0
+        ? const Color.fromARGB(0, 172, 98, 98)
+        : const Color.fromARGB(255, 54, 54, 54).withValues(alpha: fillOpacity),
+
+    borderRadius: BorderRadius.circular(radius * 1.25),
+
+    border: Border.all(
+      color: (borderColor ?? Colors.white)
+          .withValues(alpha: borderOpacity),
+      width: 1.2,
+    ),
+  );
+}
+
 
   static ThemeData lightTheme() {
     final base = ThemeData(

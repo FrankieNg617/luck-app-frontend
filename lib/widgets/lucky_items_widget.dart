@@ -28,7 +28,7 @@ class LuckyItemsWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: FortuneTheme.foreground,
+              color: const Color.fromARGB(255, 255, 255, 255),
             ),
           ),
           const SizedBox(height: 12),
@@ -91,7 +91,7 @@ class _LuckyTile extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 11,
-                  color: FortuneTheme.mutedForeground,
+                  color: const Color.fromARGB(255, 255, 255, 255),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -101,7 +101,7 @@ class _LuckyTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: FortuneTheme.foreground,
+                  color: const Color.fromARGB(255, 255, 255, 255),
                   height: 1.25,
                 ),
               ),

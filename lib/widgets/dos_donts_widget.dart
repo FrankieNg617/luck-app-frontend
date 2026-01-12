@@ -18,7 +18,7 @@ class DosDontsWidget extends StatelessWidget {
             child: _DoDontCard(
               title: 'Suggest',
               icon: Icons.thumb_up_outlined,
-              tint: FortuneTheme.sage,
+              tint: const Color.fromARGB(255, 71, 136, 94),
               items: dos,
             ),
           ),
@@ -27,7 +27,7 @@ class DosDontsWidget extends StatelessWidget {
             child: _DoDontCard(
               title: 'Avoid',
               icon: Icons.thumb_down_outlined,
-              tint: FortuneTheme.coral,
+              tint: const Color.fromARGB(255, 228, 92, 47),
               items: donts,
             ),
           ),
@@ -76,7 +76,7 @@ class _DoDontCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: FortuneTheme.foreground,
+                  color: const Color.fromARGB(255, 255, 255, 255),
                 ),
               ),
             ],
@@ -101,7 +101,7 @@ class _DoDontCard extends StatelessWidget {
                         x,
                         style: TextStyle(
                           fontSize: 13,
-                          color: FortuneTheme.mutedForeground,
+                          color: const Color.fromARGB(255, 255, 255, 255),
                           height: 1.25,
                           fontWeight: FontWeight.w600,
                         ),

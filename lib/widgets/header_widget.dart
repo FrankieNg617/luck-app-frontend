@@ -35,17 +35,17 @@ class HeaderWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: FortuneTheme.foreground,
+                      color: const Color.fromARGB(255, 255, 255, 255),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.calendar_month, size: 14, color: FortuneTheme.mutedForeground),
+                      Icon(Icons.calendar_month, size: 14, color: const Color.fromARGB(255, 179, 175, 172)),
                       const SizedBox(width: 6),
                       Text(
                         formattedDate,
-                        style: TextStyle(fontSize: 12, color: FortuneTheme.mutedForeground),
+                        style: TextStyle(fontSize: 12, color: const Color.fromARGB(255, 194, 190, 187)),
                       ),
                     ],
                   ),

@@ -25,7 +25,7 @@ class LifeAdviceWidget extends StatelessWidget {
                 fontSize: 16,
                 fontStyle: FontStyle.italic,
                 height: 1.35,
-                color: FortuneTheme.foreground,
+                color: const Color.fromARGB(255, 255, 255, 255),
               ),
             ),
           ),

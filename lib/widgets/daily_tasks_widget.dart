@@ -77,13 +77,13 @@ class _DailyTasksWidgetState extends State<DailyTasksWidget> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: FortuneTheme.foreground,
+                    color: const Color.fromARGB(255, 255, 255, 255),  // Color of Title
                   ),
                 ),
               ),
               Text(
                 '$completedCount/${tasks.length}',
-                style: TextStyle(fontSize: 13, color: FortuneTheme.mutedForeground),
+                style: TextStyle(fontSize: 13, color: const Color.fromARGB(255, 255, 255, 255)), // Color of 1/3
               )
             ],
           ),
@@ -119,11 +119,11 @@ class _TaskRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor = task.completed
         ? FortuneTheme.gold
-        : FortuneTheme.mutedForeground.withOpacity(0.25);
+        : const Color.fromARGB(255, 255, 255, 255).withOpacity(0.25);
 
-    final bgColor = task.completed
-        ? FortuneTheme.gold.withOpacity(0.10)
-        : Colors.white.withOpacity(0.55);
+    final border  = task.completed
+        ? FortuneTheme.gold.withValues(alpha: 0.65)
+        : Colors.white.withValues(alpha: 0.18);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -133,8 +133,9 @@ class _TaskRow extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: bgColor,
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: border, width: 1.2),
           ),
           child: Row(
             children: [
@@ -148,7 +149,8 @@ class _TaskRow extends StatelessWidget {
                   border: Border.all(width: 2, color: borderColor),
                 ),
                 child: task.completed
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    // Color of tick 
+                    ? const Icon(Icons.check, size: 16, color: Color.fromARGB(255, 54, 52, 52))
                     : null,
               ),
               const SizedBox(width: 12),
@@ -159,8 +161,8 @@ class _TaskRow extends StatelessWidget {
                     fontSize: 13,
                     height: 1.25,
                     color: task.completed
-                        ? FortuneTheme.mutedForeground
-                        : FortuneTheme.foreground,
+                        ? const Color.fromARGB(255, 141, 129, 129) // Color of completed task text
+                        : const Color.fromARGB(255, 255, 255, 255), // Color of incomplete task text
                     decoration: task.completed
                         ? TextDecoration.lineThrough
                         : TextDecoration.none,
