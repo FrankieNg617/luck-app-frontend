@@ -39,7 +39,7 @@ class _GalaxyBackgroundComicState extends State<GalaxyBackgroundComic>
     // Twinkle + float timing driver
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 9),
     );
 
     if (widget.animate) {
@@ -67,7 +67,7 @@ class _GalaxyBackgroundComicState extends State<GalaxyBackgroundComic>
   double _floatY(double phase) {
     // subtle vertical drift like animate-float
     final t = _controller.value * math.pi * 2;
-    return math.sin(t + phase) * 6.0;
+    return math.sin(t + phase) * 20.0;
   }
 
   @override
@@ -95,8 +95,8 @@ class _GalaxyBackgroundComicState extends State<GalaxyBackgroundComic>
                     Positioned.fill(
                       child: CustomPaint(
                         painter: _SwirlPainter(
-                          floatY: _floatY(0.0),
-                          floatY2: _floatY(-1.2),
+                          floatY: _floatY(0.9),
+                          floatY2: _floatY(-0.9),
                         ),
                       ),
                     ),
@@ -125,7 +125,36 @@ class _GalaxyBackgroundComicState extends State<GalaxyBackgroundComic>
                     //const _PlanetAccent(),
 
                     // Shooting star accent
-                    _ShootingStar(floatY: _floatY(0.7)),
+                    _ShootingStar(
+                      seconds: seconds,
+                      timeOffsetSeconds: 0.0,
+                      startXFactor: -0.55,
+                      startYFactor: 1.15,
+                      endXFactor: 0.90,
+                      endYFactor: 0.70,
+                      arcHeightFactor: 0.07,
+                      intensity: 0.65,
+                    ),
+                    _ShootingStar(
+                      seconds: seconds,
+                      timeOffsetSeconds: 7.5,
+                      startXFactor: -0.60,
+                      startYFactor: 1.18,
+                      endXFactor: 0.88,
+                      endYFactor: 0.50,
+                      arcHeightFactor: 0.08,
+                      intensity: 0.65,
+                    ),
+                    _ShootingStar(
+                      seconds: seconds,
+                      timeOffsetSeconds: 12.5,
+                      startXFactor: -0.02,
+                      startYFactor: 1.25,
+                      endXFactor: 0.95,
+                      endYFactor: 0.30,
+                      arcHeightFactor: 0.08,
+                      intensity: 0.65,
+                    )
                   ],
                 );
               },
@@ -169,220 +198,241 @@ class _BaseGradient extends StatelessWidget {
 
 /* --------------------------- NEBULA LAYERS --------------------------- */
 
-class _NebulaLayerPrimary extends StatelessWidget {
-  final double opacity;
+class NebulaBlobSpec {
+  final Offset center;          // in normalized (0..1, 0..1)
+  final double widthFactor;     // relative to screen width (e.g. 0.60)
+  final double heightFactor;    // relative to screen height (e.g. 0.35)
+  final double rotationRad;     // rotate the blob
+  final Color color;
 
-  /// 0.0 = sharper boundary, 1.0 = very soft boundary
+  /// 0.0 sharp edge → 1.0 soft edge
   final double edgeSoftness;
 
-  /// Optional extra blur applied to the whole nebula layer.
-  /// 0 = none, 10~40 subtle, 60~120 strong.
+  /// 0.0 smooth ellipse → 1.0 very wobbly blob
+  final double irregularity;
+
+  /// 0.0 no wobble detail → higher = more bumps around edge
+  final int lobes;
+
+  /// opacity baked into color (avoid Opacity widget)
+  final double alpha;
+
+  const NebulaBlobSpec({
+    required this.center,
+    required this.widthFactor,
+    required this.heightFactor,
+    required this.rotationRad,
+    required this.color,
+    this.edgeSoftness = 0.85,
+    this.irregularity = 0.0,
+    this.lobes = 6,
+    this.alpha = 0.35,
+  });
+}
+
+class NebulaPainter extends CustomPainter {
+  final List<NebulaBlobSpec> blobs;
+
+  /// Optional whole-layer blur (avoid Opacity widget)
   final double blurSigma;
 
-  const _NebulaLayerPrimary({
-    this.opacity = 0.40,
-    this.edgeSoftness = 0.75,
+  const NebulaPainter({
+    required this.blobs,
     this.blurSigma = 0,
   });
 
   @override
-  Widget build(BuildContext context) {
-    Widget layer = CustomPaint(
-      painter: _NebulaPainterPrimary(edgeSoftness: edgeSoftness),
-    );
-
+  void paint(Canvas canvas, Size size) {
     if (blurSigma > 0) {
-      layer = ImageFiltered(
-        imageFilter: ui.ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-        child: layer,
+      canvas.saveLayer(
+        Offset.zero & size,
+        Paint()..imageFilter = ui.ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
       );
     }
 
+    for (final b in blobs) {
+      final center = Offset(size.width * b.center.dx, size.height * b.center.dy);
+      final w = size.width * b.widthFactor;
+      final h = size.height * b.heightFactor;
+
+      // Edge softness: where fade starts
+      final stop = 1.0;
+      final fadeStart = (stop * (1.0 - b.edgeSoftness)).clamp(0.0, stop);
+
+      final shader = ui.Gradient.radial(
+        center,
+        math.max(w, h) * 0.6, // radius large enough to cover shape
+        [
+          b.color.withValues(alpha: b.alpha),
+          b.color.withValues(alpha: b.alpha),
+          b.color.withValues(alpha: 0.0),
+        ],
+        [0.0, fadeStart, stop],
+      );
+
+      final paint = Paint()..shader = shader;
+
+      // Draw either ellipse or organic blob
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(b.rotationRad);
+      canvas.translate(-center.dx, -center.dy);
+
+      final path = _buildBlobPath(center, w, h, b.irregularity, b.lobes);
+      canvas.drawPath(path, paint);
+
+      canvas.restore();
+    }
+
+    if (blurSigma > 0) {
+      canvas.restore();
+    }
+  }
+
+  Path _buildBlobPath(
+    Offset center,
+    double width,
+    double height,
+    double irregularity,
+    int lobes,
+  ) {
+    // If irregularity is 0, it's a perfect ellipse.
+    if (irregularity <= 0.0001) {
+      return Path()..addOval(Rect.fromCenter(center: center, width: width, height: height));
+    }
+
+    // Organic blob: radius varies around an ellipse
+    final a = width / 2;
+    final b = height / 2;
+
+    // points count controls smoothness of blob edge
+    const int points = 96;
+
+    final path = Path();
+    for (int i = 0; i <= points; i++) {
+      final t = (i / points) * math.pi * 2;
+
+      // base ellipse radius in direction t
+      // (parametric ellipse point)
+      final ex = math.cos(t) * a;
+      final ey = math.sin(t) * b;
+
+      // wobble factor: sin waves around the circumference
+      final wobble =
+          1.0 + irregularity * 0.25 * math.sin(lobes * t) + irregularity * 0.15 * math.sin((lobes + 3) * t + 1.7);
+
+      final x = center.dx + ex * wobble;
+      final y = center.dy + ey * wobble;
+
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldRepaint(covariant NebulaPainter oldDelegate) {
+    return oldDelegate.blobs != blobs || oldDelegate.blurSigma != blurSigma;
+  }
+}
+
+class _NebulaLayerPrimary extends StatelessWidget {
+  const _NebulaLayerPrimary();
+
+  @override
+  Widget build(BuildContext context) {
+    // Adjust these freely: widthFactor/heightFactor/rotation/irregularity
+    final blobs = <NebulaBlobSpec>[
+      NebulaBlobSpec(
+        center: const Offset(0.30, 0.42),
+        widthFactor: 0.55,
+        heightFactor: 0.15,          // ellipse
+        rotationRad: -0.05,
+        color: const Color(0xFF6C1B8C),
+        alpha: 0.75,
+        edgeSoftness: 0.88,
+        irregularity: 0.95,          // organic edge
+        lobes: 7,
+      ),
+      NebulaBlobSpec(
+        center: const Offset(0.82, 0.20),
+        widthFactor: 0.55,
+        heightFactor: 0.09,
+        rotationRad: 0.05,
+        color: const Color(0xFF1F63B8),
+        alpha: 0.40,
+        edgeSoftness: 0.85,
+        irregularity: 0.55,
+        lobes: 6,
+      ),
+      NebulaBlobSpec(
+        center: const Offset(0.75, 0.86),
+        widthFactor: 0.25,
+        heightFactor: 0.07,
+        rotationRad: 0.30,
+        color: const Color(0xFF7A1F4F),
+        alpha: 0.85,
+        edgeSoftness: 0.30,
+        irregularity: 0.92,
+        lobes: 8,
+      ),
+    ];
+
     return Positioned.fill(
-      child: Opacity(opacity: opacity, child: layer),
+      child: CustomPaint(
+        painter: NebulaPainter(
+          blobs: blobs,
+          blurSigma: 20, // blur the whole nebula layer (no Opacity widget)
+        ),
+      ),
     );
   }
 }
-
-class _NebulaPainterPrimary extends CustomPainter {
-  final double edgeSoftness;
-
-  /// 0.0 = sharp edge, 1.0 = very soft edge
-  const _NebulaPainterPrimary({required this.edgeSoftness});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _paintRadial(
-      canvas,
-      size,
-      center: Offset(size.width * 0.20, size.height * 0.20),
-      radiusX: size.width * 0.20,
-      radiusY: size.height * 0.20,
-      color: const Color(0xFF6C1B8C),
-      stop: 0.50,
-    );
-
-    _paintRadial(
-      canvas,
-      size,
-      center: Offset(size.width * 0.80, size.height * 0.30),
-      radiusX: size.width * 0.10,
-      radiusY: size.height * 0.10,
-      color: const Color(0xFF1F63B8),
-      stop: 0.45,
-    );
-
-    _paintRadial(
-      canvas,
-      size,
-      center: Offset(size.width * 0.60, size.height * 0.80),
-      radiusX: size.width * 0.10,
-      radiusY: size.height * 0.10,
-      color: const Color(0xFF7A1F4F),
-      stop: 0.50,
-    );
-
-    _paintRadial(
-      canvas,
-      size,
-      center: Offset(size.width * 0.10, size.height * 0.70),
-      radiusX: size.width * 0.50,
-      radiusY: size.height * 0.30,
-      color: const Color(0xFF1E6A77),
-      stop: 0.40,
-    );
-  }
-
-  void _paintRadial(
-    Canvas canvas,
-    Size size, {
-    required Offset center,
-    required double radiusX,
-    required double radiusY,
-    required Color color,
-    required double stop,
-  }) {
-    final rect = Rect.fromCenter(center: center, width: radiusX, height: radiusY);
-
-    // edgeSoftness controls when fade starts:
-    // 0.0 -> fade starts early (hard edge look)
-    // 1.0 -> fade starts late (very soft boundary)
-    final fadeStart = (stop * (1.0 - edgeSoftness)).clamp(0.0, stop);
-
-    // Use 3-stop gradient: solid -> solid -> fade out
-    final shader = ui.Gradient.radial(
-      center,
-      (math.max(radiusX, radiusY)) / 2,
-      [
-        color.withValues(alpha: 1.0),
-        color.withValues(alpha: 1.0),
-        color.withValues(alpha: 0.0),
-      ],
-      [0.0, fadeStart, stop],
-    );
-
-    final paint = Paint()..shader = shader;
-
-    canvas.save();
-    canvas.clipRect(Offset.zero & size);
-    canvas.drawOval(rect, paint);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _NebulaPainterPrimary oldDelegate) {
-    return oldDelegate.edgeSoftness != edgeSoftness;
-  }
-}
-
 
 class _NebulaLayerSecondary extends StatelessWidget {
-  final double opacity;
-  final double edgeSoftness;
-  final double blurSigma;
-
-  const _NebulaLayerSecondary({
-    this.opacity = 0.50,
-    this.edgeSoftness = 0.4,
-    this.blurSigma = 45,
-  });
+  const _NebulaLayerSecondary();
 
   @override
   Widget build(BuildContext context) {
-    Widget layer = CustomPaint(
-      painter: _NebulaPainterSecondary(edgeSoftness: edgeSoftness),
-    );
-
-    if (blurSigma > 0) {
-      layer = ImageFiltered(
-        imageFilter: ui.ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-        child: layer,
-      );
-    }
+    final blobs = <NebulaBlobSpec>[
+      NebulaBlobSpec(
+        center: const Offset(0.70, 0.55),
+        widthFactor: 0.45,
+        heightFactor: 0.28,
+        rotationRad: -0.55,
+        color: const Color(0xFF8D49D9),
+        alpha: 0.37,
+        edgeSoftness: 0.32,
+        irregularity: 0.70,
+        lobes: 5,
+      ),
+      NebulaBlobSpec(
+        center: const Offset(0.10, 0.65),
+        widthFactor: 0.38,
+        heightFactor: 0.05,
+        rotationRad: 50.0,
+        color: const ui.Color.fromARGB(255, 27, 160, 162),
+        alpha: 0.60,
+        edgeSoftness: 0.32,
+        irregularity: 0.8,
+        lobes: 0,
+      ),
+    ];
 
     return Positioned.fill(
-      child: Opacity(opacity: opacity, child: layer),
+      child: CustomPaint(
+        painter: NebulaPainter(
+          blobs: blobs,
+          blurSigma: 28,
+        ),
+      ),
     );
   }
 }
-
-class _NebulaPainterSecondary extends CustomPainter {
-  final double edgeSoftness;
-
-  const _NebulaPainterSecondary({required this.edgeSoftness});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _paintCircle(
-      canvas,
-      size,
-      center: Offset(size.width * 0.70, size.height * 0.60),
-      radius: 100,
-      color: const Color(0xFF8D49D9),
-      stop: 0.60,
-    );
-
-    _paintCircle(
-      canvas,
-      size,
-      center: Offset(size.width * 0.30, size.height * 0.40),
-      radius: 100,
-      color: const Color(0xFF9B3D8C),
-      stop: 0.55,
-    );
-  }
-
-  void _paintCircle(
-    Canvas canvas,
-    Size size, {
-    required Offset center,
-    required double radius,
-    required Color color,
-    required double stop,
-  }) {
-    final fadeStart = (stop * (1.0 - edgeSoftness)).clamp(0.0, stop);
-
-    final shader = ui.Gradient.radial(
-      center,
-      radius,
-      [
-        color.withValues(alpha: 1.0),
-        color.withValues(alpha: 1.0),
-        color.withValues(alpha: 0.0),
-      ],
-      [0.0, fadeStart, stop],
-    );
-
-    final paint = Paint()..shader = shader;
-    canvas.drawRect(Offset.zero & size, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _NebulaPainterSecondary oldDelegate) {
-    return oldDelegate.edgeSoftness != edgeSoftness;
-  }
-}
-
 
 /* --------------------------- SWIRL PATHS (SVG) --------------------------- */
 
@@ -642,7 +692,6 @@ class _DotStarsPainter extends CustomPainter {
       final paint = Paint()..color = Colors.white.withValues(alpha: a);
       canvas.drawCircle(center, s.r, paint);
 
-      // TSX boxShadow: '0 0 4px 1px rgba(255,255,255,0.3)' :contentReference[oaicite:7]{index=7}
       final glow = Paint()
         ..color = Colors.white.withValues(alpha: 0.20 * a)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
@@ -661,33 +710,24 @@ class _PlanetAccent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TSX: top 5% right 5% w-16 h-16, opacity 0.30 with radial gradient + glow :contentReference[oaicite:8]{index=8}
     return Positioned(
       top: 40,
       right: 20,
-      child: Opacity(
-        opacity: 0.30,
-        child: Container(
-          width: 64,
-          height: 64,
+      child: SizedBox(
+        width: 64,
+        height: 64,
+        child: DecoratedBox(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const RadialGradient(
-              center: Alignment(-0.4, -0.4), // ~at 30% 30%
+            gradient: RadialGradient(
+              center: const Alignment(-0.4, -0.4), // highlight at top-left
               colors: [
-                Color(0xFFB487E6),
-                Color(0xFF4B2B62),
-                Color(0xFF1D1426),
+                const Color(0xFFB487E6).withValues(alpha: 0.55),
+                const Color(0xFF4B2B62).withValues(alpha: 0.25),
+                const Color(0xFF1D1426).withValues(alpha: 0.00), // ✅ transparent edge
               ],
-              stops: [0.0, 0.5, 1.0],
+              stops: const [0.0, 0.55, 1.0],
             ),
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 20,
-                spreadRadius: 5,
-                color: const Color(0xFF7A2DBA).withValues(alpha: 0.30),
-              ),
-            ],
           ),
         ),
       ),
@@ -698,38 +738,142 @@ class _PlanetAccent extends StatelessWidget {
 /* --------------------------- SHOOTING STAR --------------------------- */
 
 class _ShootingStar extends StatelessWidget {
-  final double floatY;
-  const _ShootingStar({required this.floatY});
+  final double seconds;
+
+  /// Loop timing
+  final double periodSeconds;
+  final double travelSeconds;
+
+  /// Start & end positions (relative to screen)
+  /// These are allowed to be outside 0..1
+  final double startXFactor;
+  final double startYFactor;
+  final double endXFactor;
+  final double endYFactor;
+
+  /// Ellipse feel (arc height as fraction of screen height)
+  final double arcHeightFactor;
+
+  /// Visuals
+  final double length;
+  final double thickness;
+  final double intensity;
+
+  // Time off for different shooting stars
+  final double timeOffsetSeconds;
+
+  const _ShootingStar({
+    required this.seconds,
+    this.timeOffsetSeconds = 0.0,
+    this.periodSeconds = 20.0,
+    this.travelSeconds = 6.0,
+    this.startXFactor = -0.55, 
+    this.startYFactor = 1.15,
+    this.endXFactor = 0.90,   
+    this.endYFactor = 0.70,
+    this.arcHeightFactor = 0.07,
+    this.length = 130,
+    this.thickness = 2.2,
+    this.intensity = 0.65,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // TSX: top 30% left 60% width 20 (w-20) height 0.5, rotate(-30deg),
-    // gradient: transparent -> hsl(50,80%,75%) -> transparent, opacity 0.40 :contentReference[oaicite:9]{index=9}
+    final size = MediaQuery.of(context).size;
+    final w = size.width;
+    final h = size.height;
+
+    final t = (seconds + timeOffsetSeconds) % periodSeconds;
+    if (t > travelSeconds) return const SizedBox.shrink();
+
+    final p = (t / travelSeconds).clamp(0.0, 1.0);
+    final pe = _easeInOutCubic(p);
+    final fade = _fade(pe);
+
+    // ✅ Start & end (fully controllable)
+    final start = Offset(w * startXFactor, h * startYFactor);
+    final end = Offset(w * endXFactor, h * endYFactor);
+
+    // Linear interpolation
+    final x = _lerp(start.dx, end.dx, pe);
+    final yBase = _lerp(start.dy, end.dy, pe);
+
+    // Elliptical arc (sine bump)
+    final arc = math.sin(math.pi * pe) * (h * arcHeightFactor);
+    final y = yBase - arc;
+
+    // Tangent for rotation
+    final dx = (end.dx - start.dx);
+    final dyLinear = (end.dy - start.dy);
+    final dyArc = -(math.pi * math.cos(math.pi * pe)) * (h * arcHeightFactor);
+    final dy = dyLinear + dyArc;
+
+    final angle = math.atan2(dy, dx);
+
     return Positioned(
-      top: MediaQuery.of(context).size.height * 0.30 + floatY,
-      left: MediaQuery.of(context).size.width * 0.60,
+      left: x,
+      top: y,
       child: Transform.rotate(
-        angle: -30 * math.pi / 180,
-        child: Opacity(
-          opacity: 0.40,
-          child: Container(
-            width: 80,
-            height: 2,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  Colors.transparent,
-                  const Color(0xFFFFF0B3).withValues(alpha: 1.0),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              ),
-            ),
+        angle: angle,
+        alignment: Alignment.centerLeft,
+        child: IgnorePointer(
+          child: _MeteorStreak(
+            length: length,
+            thickness: thickness,
+            alpha: (intensity * fade).clamp(0.0, 1.0),
           ),
         ),
       ),
     );
   }
+
+  double _lerp(double a, double b, double t) => a + (b - a) * t;
+
+  double _easeInOutCubic(double x) {
+    if (x < 0.5) return 4 * x * x * x;
+    final t = -2 * x + 2;
+    return 1 - (t * t * t) / 2;
+  }
+
+  double _fade(double p) {
+    if (p < 0.12) return p / 0.12;
+    if (p > 0.88) return (1.0 - p) / 0.12;
+    return 1.0;
+  }
 }
+
+class _MeteorStreak extends StatelessWidget {
+  final double length;
+  final double thickness;
+  final double alpha;
+
+  const _MeteorStreak({
+    required this.length,
+    required this.thickness,
+    required this.alpha,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: length,
+      height: thickness,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Colors.transparent,
+            const Color(0xFFFFF0B3).withValues(alpha: alpha),
+            Colors.transparent,
+          ],
+          stops: const [0.0, 0.55, 1.0],
+        ),
+      ),
+    );
+  }
+}
+
+
+
+

@@ -34,57 +34,75 @@ class HomeScreen extends StatelessWidget {
     final time = "8AM-10AM";
 
     return Scaffold(
+      // ✅ Transparent app bar with reload button
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Reload (dev)',
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      extendBodyBehindAppBar: true,
+
       body: GalaxyBackgroundComic(
-          child: SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  children: [
-                    const HeaderWidget(),
-                    const SizedBox(height: 8),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                children: [
+                  const HeaderWidget(),
+                  const SizedBox(height: 18),
 
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        OverallScoreWidget(score: overall),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: AspectBarsWidget(
-                            career: career,
-                            study: study,
-                            love: love,
-                            social: social,
-                            fortune: fortune,
-                          ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      OverallScoreWidget(score: overall),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: AspectBarsWidget(
+                          career: career,
+                          study: study,
+                          love: love,
+                          social: social,
+                          fortune: fortune,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
 
-                    const SizedBox(height: 12),
-                    LifeAdviceWidget(advice: advice),
+                  const SizedBox(height: 22),
+                  LifeAdviceWidget(advice: advice),
 
-                    const SizedBox(height: 12),
-                    LuckyItemsWidget(
-                      food: food,
-                      numbers: numbers,
-                      colour: colour,
-                      time: time,
-                    ),
+                  const SizedBox(height: 20),
+                  LuckyItemsWidget(
+                    food: food,
+                    numbers: numbers,
+                    colour: colour,
+                    time: time,
+                  ),
 
-                    const SizedBox(height: 12),
-                    DosDontsWidget(dos: dos, donts: donts),
+                  const SizedBox(height: 20),
+                  DosDontsWidget(dos: dos, donts: donts),
 
-                    const SizedBox(height: 12),
-                    DailyTasksWidget(initialTasks: tasks),
+                  const SizedBox(height: 20),
+                  DailyTasksWidget(initialTasks: tasks),
 
-                    const SizedBox(height: 18),
-                  ],
-                ),
+                  const SizedBox(height: 18),
+                ],
               ),
             ),
           ),
+        ),
       ),
     );
   }

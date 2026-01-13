@@ -9,13 +9,34 @@ class DailyTasksWidget extends StatefulWidget {
   State<DailyTasksWidget> createState() => _DailyTasksWidgetState();
 }
 
-class _DailyTasksWidgetState extends State<DailyTasksWidget> {
+class _DailyTasksWidgetState extends State<DailyTasksWidget>
+    with SingleTickerProviderStateMixin {
   late List<_Task> tasks;
+
+  late final AnimationController _entryController;
+  late final Animation<double> _entryCurve;
 
   @override
   void initState() {
     super.initState();
     tasks = _buildTasks(widget.initialTasks, previous: const []);
+
+    // ✅ entry animation (once per widget creation)
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _entryCurve = CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeOutCubic,
+    );
+    _entryController.forward(from: 0.0);
+  }
+
+  @override
+  void dispose() {
+    _entryController.dispose();
+    super.dispose();
   }
 
   // ✅ This runs when parent passes a new initialTasks list
@@ -62,39 +83,55 @@ class _DailyTasksWidgetState extends State<DailyTasksWidget> {
   Widget build(BuildContext context) {
     final completedCount = tasks.where((t) => t.completed).length;
 
-    return Container(
-      decoration: FortuneTheme.cardDecoration(),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.star_border, size: 22, color: FortuneTheme.gold),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Daily Tasks',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: const Color.fromARGB(255, 255, 255, 255),  // Color of Title
+    return AnimatedBuilder(
+      animation: _entryCurve,
+      builder: (context, _) {
+        final t = _entryCurve.value; // 0..1
+
+        return Transform.translate(
+          offset: Offset(0, (1 - t) * 35), // slide up
+          child: Opacity(
+            opacity: t, // fade in
+            child: Container(
+              decoration: FortuneTheme.cardDecoration(),
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.star_border, size: 22, color: FortuneTheme.gold),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Daily Tasks',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color.fromARGB(255, 255, 255, 255), // Title
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '$completedCount/${tasks.length}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color.fromARGB(255, 255, 255, 255), // 1/3
+                        ),
+                      )
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 14),
+                  Column(
+                    children: tasks
+                        .map((t) => _TaskRow(task: t, onTap: () => toggleTask(t.id)))
+                        .toList(),
+                  ),
+                ],
               ),
-              Text(
-                '$completedCount/${tasks.length}',
-                style: TextStyle(fontSize: 13, color: const Color.fromARGB(255, 255, 255, 255)), // Color of 1/3
-              )
-            ],
+            ),
           ),
-          const SizedBox(height: 14),
-          Column(
-            children: tasks
-                .map((t) => _TaskRow(task: t, onTap: () => toggleTask(t.id)))
-                .toList(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -119,9 +156,9 @@ class _TaskRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor = task.completed
         ? FortuneTheme.gold
-        : const Color.fromARGB(255, 255, 255, 255).withOpacity(0.25);
+        : const Color.fromARGB(255, 255, 255, 255).withValues(alpha: 0.25);
 
-    final border  = task.completed
+    final border = task.completed
         ? FortuneTheme.gold.withValues(alpha: 0.65)
         : Colors.white.withValues(alpha: 0.18);
 
@@ -149,7 +186,6 @@ class _TaskRow extends StatelessWidget {
                   border: Border.all(width: 2, color: borderColor),
                 ),
                 child: task.completed
-                    // Color of tick 
                     ? const Icon(Icons.check, size: 16, color: Color.fromARGB(255, 54, 52, 52))
                     : null,
               ),
@@ -161,11 +197,10 @@ class _TaskRow extends StatelessWidget {
                     fontSize: 13,
                     height: 1.25,
                     color: task.completed
-                        ? const Color.fromARGB(255, 141, 129, 129) // Color of completed task text
-                        : const Color.fromARGB(255, 255, 255, 255), // Color of incomplete task text
-                    decoration: task.completed
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
+                        ? const Color.fromARGB(255, 141, 129, 129)
+                        : const Color.fromARGB(255, 255, 255, 255),
+                    decoration:
+                        task.completed ? TextDecoration.lineThrough : TextDecoration.none,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

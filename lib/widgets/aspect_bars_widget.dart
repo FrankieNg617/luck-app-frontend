@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../ui/fortune_style.dart';
 
-class AspectBarsWidget extends StatelessWidget {
+class AspectBarsWidget extends StatefulWidget {
   final int career;
   final int study;
   final int love;
@@ -18,13 +18,41 @@ class AspectBarsWidget extends StatelessWidget {
   });
 
   @override
+  State<AspectBarsWidget> createState() => _AspectBarsWidgetState();
+}
+
+class _AspectBarsWidgetState extends State<AspectBarsWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _curve;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic);
+
+    // ✅ Plays once whenever this page/widget is created (i.e. navigated to)
+    _controller.forward(from: 0.0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final aspects = <_Aspect>[
-      _Aspect("Career", career, FortuneTheme.gold, Icons.work_outline),
-      _Aspect("Study", study, FortuneTheme.sage, Icons.menu_book_outlined),
-      _Aspect("Love", love, FortuneTheme.coral, Icons.favorite_border),
-      _Aspect("Social", social, FortuneTheme.amber, Icons.people_outline),
-      _Aspect("Fortune", fortune, FortuneTheme.goldDark, Icons.paid_outlined),
+      _Aspect("Career", widget.career, FortuneTheme.gold, Icons.work_outline),
+      _Aspect("Study", widget.study, FortuneTheme.sage, Icons.menu_book_outlined),
+      _Aspect("Love", widget.love, FortuneTheme.coral, Icons.favorite_border),
+      _Aspect("Social", widget.social, FortuneTheme.amber, Icons.people_outline),
+      _Aspect("Fortune", widget.fortune, FortuneTheme.goldDark, Icons.paid_outlined),
     ];
 
     // How much lower you want the whole group to sit
@@ -37,21 +65,29 @@ class AspectBarsWidget extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned(
-            top: drop,     // 👈 pushes everything down visually
+            top: drop, // 👈 pushes everything down visually
             left: 0,
             right: 0,
             bottom: 0,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(aspects.length, (i) {
-                final a = aspects[i];
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: _AspectBarItem(aspect: a),
-                  ),
+            child: AnimatedBuilder(
+              animation: _curve,
+              builder: (context, _) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(aspects.length, (i) {
+                    final a = aspects[i];
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: _AspectBarItem(
+                          aspect: a,
+                          anim: _curve.value, // ✅ 0..1
+                        ),
+                      ),
+                    );
+                  }),
                 );
-              }),
+              },
             ),
           ),
         ],
@@ -70,7 +106,14 @@ class _Aspect {
 
 class _AspectBarItem extends StatelessWidget {
   final _Aspect aspect;
-  const _AspectBarItem({required this.aspect});
+
+  /// 0..1 animation progress for bar growth
+  final double anim;
+
+  const _AspectBarItem({
+    required this.aspect,
+    required this.anim,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -92,8 +135,12 @@ class _AspectBarItem extends StatelessWidget {
               const gap = 6.0;
 
               // bar gets the rest
-              final barMax = (available - scoreLabelH - gap).clamp(0.0, double.infinity);
-              final barHeight = (score / 100.0) * barMax;
+              final barMax =
+                  (available - scoreLabelH - gap).clamp(0.0, double.infinity);
+
+              // ✅ Animate from 0 -> (score/100)*barMax
+              final targetFactor = score / 100.0;
+              final barHeight = barMax * targetFactor * anim;
 
               return Column(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -105,10 +152,10 @@ class _AspectBarItem extends StatelessWidget {
                       child: Text(
                         '$score',
                         maxLines: 1,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: const Color.fromARGB(255, 255, 255, 255), // Color of scores
+                          color: Color.fromARGB(255, 255, 255, 255), // scores
                         ),
                       ),
                     ),
@@ -118,7 +165,7 @@ class _AspectBarItem extends StatelessWidget {
                     width: 32,
                     height: barHeight,
                     decoration: BoxDecoration(
-                      color: aspect.color.withOpacity(0.9),
+                      color: aspect.color.withValues(alpha: 0.90),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16),
@@ -137,13 +184,13 @@ class _AspectBarItem extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: aspect.color.withOpacity(0.18),
+            color: aspect.color.withValues(alpha: 0.18),
             shape: BoxShape.circle,
           ),
           child: Icon(
             aspect.icon,
             size: 16,
-            color: FortuneTheme.foreground.withOpacity(0.7),
+            color: FortuneTheme.foreground.withValues(alpha: 0.70),
           ),
         ),
 
@@ -157,10 +204,10 @@ class _AspectBarItem extends StatelessWidget {
             child: Text(
               aspect.name,
               maxLines: 1,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: const Color.fromARGB(255, 206, 203, 203), // Color of aspect text
+                color: Color.fromARGB(255, 206, 203, 203),
               ),
             ),
           ),

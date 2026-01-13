@@ -19,12 +19,12 @@ class HeaderWidget extends StatelessWidget {
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  gradient: FortuneTheme.gradientGold,
-                  shape: BoxShape.circle,
-                  boxShadow: FortuneTheme.shadowGoldGlow,
-                ),
-                child: const Icon(Icons.wb_sunny, color: Colors.white, size: 20),
+                // decoration: BoxDecoration(
+                //   gradient: FortuneTheme.gradientGold,
+                //   shape: BoxShape.circle,
+                //   boxShadow: FortuneTheme.shadowGoldGlow,
+                // ),
+                child: const Icon(Icons.wb_sunny, color: Colors.white, size: 25),
               ),
               const SizedBox(width: 12),
               Column(

@@ -1,38 +1,84 @@
 import 'package:flutter/material.dart';
 import '../ui/fortune_style.dart';
 
-class DosDontsWidget extends StatelessWidget {
+class DosDontsWidget extends StatefulWidget {
   final List<String> dos;
   final List<String> donts;
 
   const DosDontsWidget({super.key, required this.dos, required this.donts});
 
   @override
+  State<DosDontsWidget> createState() => _DosDontsWidgetState();
+}
+
+class _DosDontsWidgetState extends State<DosDontsWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _curve;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700), // speed
+    );
+
+    _curve = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+
+    // ✅ play once per widget creation (home screen directed)
+    _controller.forward(from: 0.0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // ✅ IntrinsicHeight forces Row children to share the same height
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch, // ✅ stretch to tallest
-        children: [
-          Expanded(
-            child: _DoDontCard(
-              title: 'Suggest',
-              icon: Icons.thumb_up_outlined,
-              tint: const Color.fromARGB(255, 71, 136, 94),
-              items: dos,
+    return AnimatedBuilder(
+      animation: _curve,
+      builder: (context, _) {
+        final t = _curve.value;
+
+        return Transform.translate(
+          offset: Offset(0, (1 - t) * 35), // slide up
+          child: Opacity(
+            opacity: t, // fade in
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch, // ✅ stretch to tallest
+                children: [
+                  Expanded(
+                    child: _DoDontCard(
+                      title: 'Suggest',
+                      icon: Icons.thumb_up_outlined,
+                      tint: const Color.fromARGB(255, 71, 136, 94),
+                      items: widget.dos,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _DoDontCard(
+                      title: 'Avoid',
+                      icon: Icons.thumb_down_outlined,
+                      tint: const Color.fromARGB(255, 228, 92, 47),
+                      items: widget.donts,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _DoDontCard(
-              title: 'Avoid',
-              icon: Icons.thumb_down_outlined,
-              tint: const Color.fromARGB(255, 228, 92, 47),
-              items: donts,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -65,18 +111,22 @@ class _DoDontCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: tint.withOpacity(0.16),
+                  color: tint.withValues(alpha: 0.16),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 16, color: tint),
               ),
               const SizedBox(width: 8),
+              const Text(
+                ' ',
+                style: TextStyle(fontSize: 0),
+              ),
               Text(
                 title,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: const Color.fromARGB(255, 255, 255, 255),
+                  color: Color.fromARGB(255, 255, 255, 255),
                 ),
               ),
             ],
@@ -84,32 +134,34 @@ class _DoDontCard extends StatelessWidget {
           const SizedBox(height: 10),
 
           // list
-          ...items.map((x) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 6),
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        x,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: const Color.fromARGB(255, 255, 255, 255),
-                          height: 1.25,
-                          fontWeight: FontWeight.w600,
-                        ),
+          ...items.map(
+            (x) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      x,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        height: 1.25,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
