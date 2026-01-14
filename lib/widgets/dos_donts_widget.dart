@@ -22,7 +22,7 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700), // speed
+      duration: const Duration(milliseconds: 700),
     );
 
     _curve = CurvedAnimation(
@@ -30,7 +30,6 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
       curve: Curves.easeOutCubic,
     );
 
-    // ✅ play once per widget creation (home screen directed)
     _controller.forward(from: 0.0);
   }
 
@@ -40,27 +39,37 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
     super.dispose();
   }
 
+  double _responsiveIconSize(BuildContext context) {
+    // Approx card width: (screen - gap) / 2
+    final w = MediaQuery.of(context).size.width;
+    final cardW = (w - 12) / 2;
+
+    // Responsive icon size based on card width
+    return (cardW * 0.12).clamp(16.0, 26.0);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // ✅ IntrinsicHeight forces Row children to share the same height
+    final iconSize = _responsiveIconSize(context);
+
     return AnimatedBuilder(
       animation: _curve,
       builder: (context, _) {
         final t = _curve.value;
 
         return Transform.translate(
-          offset: Offset(0, (1 - t) * 35), // slide up
+          offset: Offset(0, (1 - t) * 35),
           child: Opacity(
-            opacity: t, // fade in
+            opacity: t,
             child: IntrinsicHeight(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch, // ✅ stretch to tallest
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
                     child: _DoDontCard(
                       title: 'Suggest',
-                      icon: Icons.thumb_up_outlined,
-                      tint: const Color.fromARGB(255, 71, 136, 94),
+                      iconAsset: 'assets/icons/dos.png',
+                      iconSize: iconSize,
                       items: widget.dos,
                     ),
                   ),
@@ -68,8 +77,8 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
                   Expanded(
                     child: _DoDontCard(
                       title: 'Avoid',
-                      icon: Icons.thumb_down_outlined,
-                      tint: const Color.fromARGB(255, 228, 92, 47),
+                      iconAsset: 'assets/icons/donts.png',
+                      iconSize: iconSize * 1.12,
                       items: widget.donts,
                     ),
                   ),
@@ -85,21 +94,20 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
 
 class _DoDontCard extends StatelessWidget {
   final String title;
-  final IconData icon;
-  final Color tint;
+  final String iconAsset;
+  final double iconSize;
   final List<String> items;
 
   const _DoDontCard({
     required this.title,
-    required this.icon,
-    required this.tint,
+    required this.iconAsset,
+    required this.iconSize,
     required this.items,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      // ✅ Make sure the card is willing to fill available height
       constraints: const BoxConstraints(minHeight: double.infinity),
       decoration: FortuneTheme.cardDecoration(),
       padding: const EdgeInsets.all(14),
@@ -108,23 +116,17 @@ class _DoDontCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: tint.withValues(alpha: 0.16),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 16, color: tint),
+              Image.asset(
+                iconAsset,
+                width: iconSize,
+                height: iconSize,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(width: 8),
-              const Text(
-                ' ',
-                style: TextStyle(fontSize: 0),
-              ),
+              const SizedBox(width: 12),
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: Color.fromARGB(255, 255, 255, 255),
                 ),
@@ -133,7 +135,6 @@ class _DoDontCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // list
           ...items.map(
             (x) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -144,7 +145,7 @@ class _DoDontCard extends StatelessWidget {
                     margin: const EdgeInsets.only(top: 6),
                     width: 6,
                     height: 6,
-                    decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
+                    decoration: BoxDecoration(shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
