@@ -48,11 +48,17 @@ class _AspectBarsWidgetState extends State<AspectBarsWidget>
   @override
   Widget build(BuildContext context) {
     final aspects = <_Aspect>[
-      _Aspect("Career", widget.career, FortuneTheme.gold, Icons.work_outline),
-      _Aspect("Study", widget.study, FortuneTheme.sage, Icons.menu_book_outlined),
-      _Aspect("Love", widget.love, FortuneTheme.coral, Icons.favorite_border),
-      _Aspect("Social", widget.social, FortuneTheme.amber, Icons.people_outline),
-      _Aspect("Fortune", widget.fortune, FortuneTheme.goldDark, Icons.paid_outlined),
+      _Aspect("Career", widget.career, FortuneTheme.gold, 'assets/icons/briefcase.png',
+          iconScale: 1.00),
+      _Aspect("Study", widget.study, FortuneTheme.sage, 'assets/icons/book.png',
+          iconScale: 1.00),
+      _Aspect("Love", widget.love, FortuneTheme.coral, 'assets/icons/love.png',
+          iconScale: 1.00),
+      _Aspect("Social", widget.social, FortuneTheme.amber, 'assets/icons/social2.png',
+          iconScale: 1.00),
+      _Aspect("Fortune", widget.fortune, FortuneTheme.goldDark,
+          'assets/icons/fortune2.png',
+          iconScale: 1.00),
     ];
 
     // How much lower you want the whole group to sit
@@ -72,20 +78,35 @@ class _AspectBarsWidgetState extends State<AspectBarsWidget>
             child: AnimatedBuilder(
               animation: _curve,
               builder: (context, _) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(aspects.length, (i) {
-                    final a = aspects[i];
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: _AspectBarItem(
-                          aspect: a,
-                          anim: _curve.value, // ✅ 0..1
-                        ),
-                      ),
+                // ✅ responsive sizing based on available width
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Rough per-cell width (Expanded will share width evenly)
+                    final cellW = constraints.maxWidth / aspects.length;
+
+                    // Base size: 22% of cell width, clamped for safety
+                    final baseIconSize = (cellW * 0.62).clamp(16.0, 30.0);
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: List.generate(aspects.length, (i) {
+                        final a = aspects[i];
+                        final iconSize =
+                            (baseIconSize * a.iconScale).clamp(14.0, 34.0);
+
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: _AspectBarItem(
+                              aspect: a,
+                              anim: _curve.value, // ✅ 0..1
+                              iconSize: iconSize, // ✅ responsive
+                            ),
+                          ),
+                        );
+                      }),
                     );
-                  }),
+                  },
                 );
               },
             ),
@@ -100,8 +121,18 @@ class _Aspect {
   final String name;
   final int score;
   final Color color;
-  final IconData icon;
-  _Aspect(this.name, this.score, this.color, this.icon);
+  final String iconAsset;
+
+  /// Optional multiplier so each aspect can be slightly different.
+  final double iconScale;
+
+  _Aspect(
+    this.name,
+    this.score,
+    this.color,
+    this.iconAsset, {
+    this.iconScale = 1.0,
+  });
 }
 
 class _AspectBarItem extends StatelessWidget {
@@ -110,9 +141,13 @@ class _AspectBarItem extends StatelessWidget {
   /// 0..1 animation progress for bar growth
   final double anim;
 
+  /// responsive icon size
+  final double iconSize;
+
   const _AspectBarItem({
     required this.aspect,
     required this.anim,
+    required this.iconSize,
   });
 
   @override
@@ -155,7 +190,7 @@ class _AspectBarItem extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: Color.fromARGB(255, 255, 255, 255), // scores
+                          color: Color.fromARGB(255, 255, 255, 255),
                         ),
                       ),
                     ),
@@ -180,32 +215,26 @@ class _AspectBarItem extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        // icon
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: aspect.color.withValues(alpha: 0.18),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            aspect.icon,
-            size: 16,
-            color: FortuneTheme.foreground.withValues(alpha: 0.70),
-          ),
+        // ✅ responsive icon (no background circle)
+        Image.asset(
+          aspect.iconAsset,
+          width: iconSize,
+          height: iconSize,
+          fit: BoxFit.contain,
         ),
 
         const SizedBox(height: 6),
 
         // label (no wrap)
         SizedBox(
-          height: 14, // fixed so it can't push layout taller
+          height: 14,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               aspect.name,
               maxLines: 1,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color.fromARGB(255, 206, 203, 203),
               ),
