@@ -353,8 +353,8 @@ class _NebulaLayerPrimary extends StatelessWidget {
         heightFactor: 0.15,          // ellipse
         rotationRad: -0.05,
         color: const Color(0xFF6C1B8C),
-        alpha: 0.75,
-        edgeSoftness: 0.88,
+        alpha: 0.35,
+        edgeSoftness: 0.68,
         irregularity: 0.95,          // organic edge
         lobes: 7,
       ),
@@ -401,13 +401,13 @@ class _NebulaLayerSecondary extends StatelessWidget {
     final blobs = <NebulaBlobSpec>[
       NebulaBlobSpec(
         center: const Offset(0.70, 0.55),
-        widthFactor: 0.45,
-        heightFactor: 0.28,
+        widthFactor: 0.35,
+        heightFactor: 0.25,
         rotationRad: -0.55,
         color: const Color(0xFF8D49D9),
-        alpha: 0.37,
-        edgeSoftness: 0.32,
-        irregularity: 0.70,
+        alpha: 0.45,
+        edgeSoftness: 0.62,
+        irregularity: 0.30,
         lobes: 5,
       ),
       NebulaBlobSpec(
