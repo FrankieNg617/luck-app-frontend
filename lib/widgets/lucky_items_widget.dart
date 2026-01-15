@@ -58,82 +58,80 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
           offset: Offset(0, (1 - t) * 35), // slide up
           child: Opacity(
             opacity: t, // fade in
-            child: Container(
-              decoration: FortuneTheme.cardDecoration(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Today's Lucky",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: Color.fromARGB(255, 255, 255, 255),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const gap = 12.0;
 
-                  // ✅ Flexible layout: items can grow vertically if text is long
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final half = (constraints.maxWidth - 12) / 2; // 12 = spacing
-                      
-                       // ✅ responsive base size derived from tile width
-                      double baseIcon = (half * 0.14).clamp(14.0, 26.0);
+                // This is just to compute responsive icon sizes
+                final half = (constraints.maxWidth - gap) / 2;
 
-                      // Optional per-item tuning relative to base
-                      final foodIcon = (baseIcon * 1.20).clamp(14.0, 28.0);
-                      final numberIcon = (baseIcon * 1.05).clamp(14.0, 26.0);
-                      final colourIcon = (baseIcon * 1.00).clamp(14.0, 26.0);
-                      final timeIcon = (baseIcon * 1.10).clamp(14.0, 28.0);
-                      
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
+                // ✅ responsive base size derived from tile width
+                final baseIcon = (half * 0.14).clamp(14.0, 26.0);
+
+                // Optional per-item tuning relative to base
+                final foodIcon = (baseIcon * 1.20).clamp(14.0, 28.0);
+                final numberIcon = (baseIcon * 1.05).clamp(14.0, 26.0);
+                final colourIcon = (baseIcon * 1.00).clamp(14.0, 26.0);
+                final timeIcon = (baseIcon * 1.10).clamp(14.0, 28.0);
+
+                return Column(
+                  children: [
+                    // ===== Row 1: Food | Numbers (equal height) =====
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SizedBox(
-                            width: half,
-                            child: _LuckyTile(
+                          Expanded(
+                            child: _LuckyBox(
                               iconAsset: 'assets/icons/food2.png',
-                              label: 'Food',
+                              category: 'Food',
                               value: widget.food,
                               iconSize: foodIcon,
                             ),
                           ),
-                          SizedBox(
-                            width: half,
-                            child: _LuckyTile(
+                          const SizedBox(width: gap),
+                          Expanded(
+                            child: _LuckyBox(
                               iconAsset: 'assets/icons/number.png',
-                              label: 'Numbers',
+                              category: 'Numbers',
                               value: widget.numbers.join(', '),
                               iconSize: numberIcon,
                             ),
                           ),
-                          SizedBox(
-                            width: half,
-                            child: _LuckyTile(
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: gap),
+
+                    // ===== Row 2: Colour | Time (equal height) =====
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _LuckyBox(
                               iconAsset: 'assets/icons/colour.png',
-                              label: 'Colour',
+                              category: 'Colour',
                               value: widget.colour,
                               iconSize: colourIcon,
                             ),
                           ),
-                          SizedBox(
-                            width: half,
-                            child: _LuckyTile(
+                          const SizedBox(width: gap),
+                          Expanded(
+                            child: _LuckyBox(
                               iconAsset: 'assets/icons/time2.png',
-                              label: 'Time',
+                              category: 'Time',
                               value: widget.time,
                               iconSize: timeIcon,
                             ),
                           ),
                         ],
-                      );
-                    },
-                  ),
-                ],
-              ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         );
@@ -142,63 +140,70 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
   }
 }
 
-class _LuckyTile extends StatelessWidget {
+class _LuckyBox extends StatelessWidget {
   final String iconAsset;
-  final String label;
+  final String category;
   final String value;
   final double iconSize;
 
-  const _LuckyTile({
+  const _LuckyBox({
     required this.iconAsset,
-    required this.label,
+    required this.category,
     required this.value,
     required this.iconSize,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: iconSize, // keeps alignment stable
-          child: Align(
-            alignment: Alignment.topCenter,
+    return Container(
+      decoration: FortuneTheme.cardDecoration(), // ✅ each small box transparent
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // LEFT: text (value top, category below)
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, // ✅ centers vertically
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Color.fromARGB(255, 255, 255, 255),
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  category,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color.fromARGB(255, 200, 200, 200),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // RIGHT: icon (vertically centered)
+          Center(
             child: Image.asset(
               iconAsset,
               width: iconSize,
               height: iconSize,
+              fit: BoxFit.contain,
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color.fromARGB(255, 255, 255, 255),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Color.fromARGB(255, 255, 255, 255),
-                  height: 1.25,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
-

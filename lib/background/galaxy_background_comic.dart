@@ -88,18 +88,18 @@ class _GalaxyBackgroundComicState extends State<GalaxyBackgroundComic>
                     const _BaseGradient(),
 
                     // Nebula layers
-                    const _NebulaLayerPrimary(),
-                    const _NebulaLayerSecondary(),
+                    //const _NebulaLayerPrimary(),
+                    //const _NebulaLayerSecondary(),
                     
                     // Swirl SVG equivalent (two paths) with float
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _SwirlPainter(
-                          floatY: _floatY(0.9),
-                          floatY2: _floatY(-0.9),
-                        ),
-                      ),
-                    ),
+                    // Positioned.fill(
+                    //   child: CustomPaint(
+                    //     painter: _SwirlPainter(
+                    //       floatY: _floatY(0.9),
+                    //       floatY2: _floatY(-0.9),
+                    //     ),
+                    //   ),
+                    // ),
 
                     // Large stylized stars (twinkle)
                     Positioned.fill(

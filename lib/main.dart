@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'ui/fortune_style.dart';
-import 'screens/home_screen.dart';
+import 'screens/Home_screen.dart';
 
 void main() {
   runApp(const FortuneApp());

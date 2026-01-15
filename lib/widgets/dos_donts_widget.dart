@@ -40,11 +40,8 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
   }
 
   double _responsiveIconSize(BuildContext context) {
-    // Approx card width: (screen - gap) / 2
     final w = MediaQuery.of(context).size.width;
-    final cardW = (w - 12) / 2;
-
-    // Responsive icon size based on card width
+    final cardW = (w - 24) / 2; // padding-aware
     return (cardW * 0.12).clamp(16.0, 26.0);
   }
 
@@ -61,28 +58,46 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
           offset: Offset(0, (1 - t) * 35),
           child: Opacity(
             opacity: t,
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: _DoDontCard(
-                      title: 'Suggest',
-                      iconAsset: 'assets/icons/dos.png',
-                      iconSize: iconSize,
-                      items: widget.dos,
+            child: Container(
+              decoration: FortuneTheme.cardDecoration(),
+              padding: const EdgeInsets.all(14),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _DoDontSection(
+                        title: 'Suggest',
+                        iconAsset: 'assets/icons/dos.png',
+                        iconSize: iconSize,
+                        items: widget.dos,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _DoDontCard(
-                      title: 'Avoid',
-                      iconAsset: 'assets/icons/donts.png',
-                      iconSize: iconSize * 1.12,
-                      items: widget.donts,
+
+                    // ✅ divider (now has real height)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Container(
+                        width: 1,
+                        height: double.infinity, // ✅ important
+                        margin: const EdgeInsets.symmetric(vertical: 12), // ✅ not touching edges
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          color: const Color.fromARGB(255, 179, 164, 164).withValues(alpha: 0.35),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+
+                    Expanded(
+                      child: _DoDontSection(
+                        title: 'Avoid',
+                        iconAsset: 'assets/icons/donts.png',
+                        iconSize: iconSize,
+                        items: widget.donts,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -92,13 +107,15 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
   }
 }
 
-class _DoDontCard extends StatelessWidget {
+/* ---------------- SECTION (LEFT / RIGHT) ---------------- */
+
+class _DoDontSection extends StatelessWidget {
   final String title;
   final String iconAsset;
   final double iconSize;
   final List<String> items;
 
-  const _DoDontCard({
+  const _DoDontSection({
     required this.title,
     required this.iconAsset,
     required this.iconSize,
@@ -107,64 +124,66 @@ class _DoDontCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: double.infinity),
-      decoration: FortuneTheme.cardDecoration(),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Image.asset(
-                iconAsset,
-                width: iconSize,
-                height: iconSize,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Color.fromARGB(255, 255, 255, 255),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          ...items.map(
-            (x) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 6),
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      x,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        height: 1.25,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Row(
+          children: [
+            const SizedBox(width: 10),
+            Image.asset(
+              iconAsset,
+              width: iconSize,
+              height: iconSize,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: Color.fromARGB(255, 255, 255, 255),
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Items
+        ...items.map(
+          (x) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(width: 10),
+                Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color.fromARGB(255, 255, 255, 255),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    x,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      height: 1.25,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
