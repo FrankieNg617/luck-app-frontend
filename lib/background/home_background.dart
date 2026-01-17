@@ -20,7 +20,7 @@ class HomeBackground extends StatelessWidget {
       children: [
         // ================= BASE SKY =================
         Image.asset(
-          'assets/backgrounds/sky.png',
+          'assets/backgrounds/test.png',
           fit: BoxFit.cover,
         ),
 
@@ -28,10 +28,10 @@ class HomeBackground extends StatelessWidget {
         if (midLayer != null) midLayer!,
 
         // ================= FOREGROUND =================
-        Image.asset(
-          'assets/backgrounds/foreground.png',
-          fit: BoxFit.cover,
-        ),
+        // Image.asset(
+        //   'assets/backgrounds/foreground.png',
+        //   fit: BoxFit.cover,
+        // ),
 
         // ================= UI CONTENT =================
         if (child != null) child!,
