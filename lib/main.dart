@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:luck_app/screens/ready_screen.dart';
 import 'ui/fortune_style.dart';
-import 'screens/Home_screen.dart';
 
 void main() {
   runApp(const FortuneApp());
@@ -15,7 +15,7 @@ class FortuneApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Daily Luck',
       theme: FortuneTheme.lightTheme(),
-      home: const HomeScreen(),
+      home: const ReadyScreen(),
     );
   }
 }
