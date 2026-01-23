@@ -19,9 +19,17 @@ class _ReadyBackgroundState extends State<ReadyBackground>
   late final AnimationController _controller;
   late final List<_Star> _stars;
 
+  // ✅ precache flag
+  bool _bgReady = false;
+
+  // ✅ keep provider so precache uses same key
+  late final AssetImage _bgProvider;
+
   @override
   void initState() {
     super.initState();
+
+    _bgProvider = const AssetImage('assets/backgrounds/ready_background.png');
 
     _controller = AnimationController(
       vsync: this,
@@ -30,6 +38,19 @@ class _ReadyBackgroundState extends State<ReadyBackground>
 
     final rng = math.Random();
     _stars = List.generate(150, (_) => _Star.random(rng));
+  }
+
+  // ✅ Preload image BEFORE first visible frame for this widget
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_bgReady) return;
+
+    precacheImage(_bgProvider, context).then((_) {
+      if (!mounted) return;
+      setState(() => _bgReady = true);
+    });
   }
 
   @override
@@ -48,59 +69,64 @@ class _ReadyBackgroundState extends State<ReadyBackground>
     return Stack(
       fit: StackFit.expand,
       children: [
-        // ================= BACKGROUND IMAGE =================
-        Image.asset(
-          'assets/backgrounds/ready_background.png',
+        // BG image
+        Image(
+          image: _bgProvider,
           fit: BoxFit.cover,
           alignment: Alignment.center,
+          filterQuality: FilterQuality.high,
         ),
 
-        // ================= DOT STAR =================
-        IgnorePointer(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              final elapsedMs = _controller.lastElapsedDuration?.inMilliseconds ?? 0;
-              final seconds = elapsedMs / 1000.0;
+        // Only show animated overlays after the image is ready (prevents stars-only phase)
+        if (_bgReady) ...[
+          // ================= DOT STAR =================
+          IgnorePointer(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final elapsedMs =
+                    _controller.lastElapsedDuration?.inMilliseconds ?? 0;
+                final seconds = elapsedMs / 1000.0;
 
-              return CustomPaint(
-                painter: _StarPainter(
-                  stars: _stars,
-                  timeSeconds: seconds,
-                ),
-                size: MediaQuery.of(context).size,
-              );
-            },
-          ),
-        ),
-
-        // ================= SHOOTING STARS (SAME LOGIC AS GalaxyBackgroundComic) =================
-        IgnorePointer(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              final seconds = _seconds();
-              return Stack(
-                children: [
-                  _ShootingStar(
-                    seconds: seconds,
-                    timeOffsetSeconds: 0.0,
-                    startXFactor: 1.20,
-                    startYFactor: 0.15,
-                    endXFactor: -0.70,
-                    endYFactor: 0.60,
-                    arcHeightFactor: 0.07,
-                    intensity: 0.65,
+                return CustomPaint(
+                  painter: _StarPainter(
+                    stars: _stars,
+                    timeSeconds: seconds,
                   ),
-                  
-                ],
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-        
-        // ================= UI CONTENT =================
-        if (widget.child != null) widget.child!,
+
+          // ================= SHOOTING STAR =================
+          IgnorePointer(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final seconds = _seconds();
+                return Stack(
+                  children: [
+                    _ShootingStar(
+                      seconds: seconds,
+                      timeOffsetSeconds: 0.0,
+                      startXFactor: 1.20,
+                      startYFactor: 0.15,
+                      endXFactor: -0.70,
+                      endYFactor: 0.60,
+                      arcHeightFactor: 0.07,
+                      intensity: 0.65,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+
+          // ================= HINT TEXT =================
+          const TypingHintText(
+            username: 'Frankie',
+          ),
+        ],
       ],
     );
   }
@@ -109,12 +135,12 @@ class _ReadyBackgroundState extends State<ReadyBackground>
 /* ================= DOT STAR MODEL ================= */
 
 class _Star {
-  final double x; // 0..1
-  final double y; // 0..0.5 (upper half only)
+  final double x;
+  final double y;
   final double radius;
-  final double speed; // radians/sec-ish multiplier
+  final double speed;
   final bool glow;
-  final double phase; // desync so no group "rest"
+  final double phase;
 
   _Star({
     required this.x,
@@ -128,11 +154,11 @@ class _Star {
   factory _Star.random(math.Random rng) {
     return _Star(
       x: rng.nextDouble(),
-      y: rng.nextDouble() * 0.5, // upper half
-      radius: 0.6 + rng.nextDouble() * 1.8, // random dot size
-      speed: 0.8 + rng.nextDouble() * 3.0, // different blink speeds
-      glow: rng.nextDouble() < 0.45, // some have purple glow
-      phase: rng.nextDouble() * math.pi * 2, // random phase offset
+      y: rng.nextDouble() * 0.5,
+      radius: 0.6 + rng.nextDouble() * 1.8,
+      speed: 0.8 + rng.nextDouble() * 3.0,
+      glow: rng.nextDouble() < 0.45,
+      phase: rng.nextDouble() * math.pi * 2,
     );
   }
 }
@@ -141,7 +167,7 @@ class _Star {
 
 class _StarPainter extends CustomPainter {
   final List<_Star> stars;
-  final double timeSeconds; // continuous
+  final double timeSeconds;
 
   _StarPainter({
     required this.stars,
@@ -157,16 +183,15 @@ class _StarPainter extends CustomPainter {
       final tw = 0.55 + 0.45 * math.sin(timeSeconds * s.speed + s.phase);
       final opacity = tw.clamp(0.10, 1.0);
 
-      // Core dot
-      final corePaint = Paint()
-        ..color = Colors.white.withValues(alpha: opacity);
+      final corePaint =
+          Paint()..color = Colors.white.withValues(alpha: opacity);
 
       canvas.drawCircle(Offset(dx, dy), s.radius, corePaint);
 
-      // Optional purple glow
       if (s.glow) {
         final glowPaint = Paint()
-          ..color = const Color.fromARGB(255, 165, 120, 241).withValues(alpha: 5.00 * opacity)
+          ..color = const Color.fromARGB(255, 165, 120, 241)
+              .withValues(alpha: 1.00 * opacity)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
 
         canvas.drawCircle(Offset(dx, dy), s.radius * 1.8, glowPaint);
@@ -183,26 +208,20 @@ class _StarPainter extends CustomPainter {
 class _ShootingStar extends StatelessWidget {
   final double seconds;
 
-  /// Loop timing
   final double periodSeconds;
   final double travelSeconds;
 
-  /// Start & end positions (relative to screen)
-  /// These are allowed to be outside 0..1
   final double startXFactor;
   final double startYFactor;
   final double endXFactor;
   final double endYFactor;
 
-  /// Ellipse feel (arc height as fraction of screen height)
   final double arcHeightFactor;
 
-  /// Visuals
   final double length;
   final double thickness;
   final double intensity;
 
-  // Time off for different shooting stars
   final double timeOffsetSeconds;
 
   const _ShootingStar({
@@ -210,9 +229,9 @@ class _ShootingStar extends StatelessWidget {
     this.timeOffsetSeconds = 0.0,
     this.periodSeconds = 10.0,
     this.travelSeconds = 6.0,
-    this.startXFactor = -0.55, 
+    this.startXFactor = -0.55,
     this.startYFactor = 1.15,
-    this.endXFactor = 0.90,   
+    this.endXFactor = 0.90,
     this.endYFactor = 0.70,
     this.arcHeightFactor = 0.07,
     this.length = 130,
@@ -233,19 +252,15 @@ class _ShootingStar extends StatelessWidget {
     final pe = _easeInOutCubic(p);
     final fade = _fade(pe);
 
-    // ✅ Start & end (fully controllable)
     final start = Offset(w * startXFactor, h * startYFactor);
     final end = Offset(w * endXFactor, h * endYFactor);
 
-    // Linear interpolation
     final x = _lerp(start.dx, end.dx, pe);
     final yBase = _lerp(start.dy, end.dy, pe);
 
-    // Elliptical arc (sine bump)
     final arc = math.sin(math.pi * pe) * (h * arcHeightFactor);
     final y = yBase - arc;
 
-    // Tangent for rotation
     final dx = (end.dx - start.dx);
     final dyLinear = (end.dy - start.dy);
     final dyArc = -(math.pi * math.cos(math.pi * pe)) * (h * arcHeightFactor);
@@ -316,4 +331,156 @@ class _MeteorStreak extends StatelessWidget {
     );
   }
 }
+
+/* --------------------------- HINT TEXT --------------------------- */
+
+class TypingHintText extends StatefulWidget {
+  final String username;
+  final Duration initialDelay;
+
+  const TypingHintText({
+    super.key,
+    required this.username,
+    this.initialDelay = const Duration(milliseconds: 800),
+  });
+
+  @override
+  State<TypingHintText> createState() => _TypingHintTextState();
+}
+
+class _TypingHintTextState extends State<TypingHintText>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late Animation<int> _charCount;
+  late Animation<double> _fade;
+
+  late final String _firstText;
+  late final String _secondText;
+
+  bool _showSecond = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _firstText = 'Hi ${widget.username}';
+    _secondText = 'Tap anywhere to start your journey';
+
+    _controller = AnimationController(vsync: this);
+
+    // safe default
+    _charCount = const AlwaysStoppedAnimation<int>(0);
+    _fade = const AlwaysStoppedAnimation<double>(0.0);
+
+    Future.delayed(widget.initialDelay, () {
+      if (!mounted) return;
+      _playTyping();
+    });
+  }
+
+  void _playTyping() {
+    _controller
+      ..stop()
+      ..reset()
+      ..duration = Duration(milliseconds: _firstText.length * 55);
+
+    _charCount = StepTween(
+      begin: 0,
+      end: _firstText.length,
+    ).animate(_controller);
+
+    setState(() {}); // rebuild with new animation
+
+    _controller.forward().then((_) async {
+      // pause after typing
+      await Future.delayed(const Duration(milliseconds: 2000));
+      if (!mounted) return;
+
+      _playFadeIn();
+    });
+  }
+
+  void _playFadeIn() {
+    _controller
+      ..stop()
+      ..reset()
+      ..duration = const Duration(milliseconds: 2000);
+
+    _fade = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    setState(() {
+      _showSecond = true;
+    });
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final fontSize = (size.width * 0.045).clamp(14.0, 20.0);
+    final bottomPadding = (size.height * 0.08).clamp(28.0, 56.0);
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: bottomPadding,
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            Widget text;
+
+            if (_showSecond) {
+              // 🌫️ fade-in text
+              text = Opacity(
+                opacity: _fade.value,
+                child: Text(
+                  _secondText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w500,
+                    color: const Color.fromARGB(255, 230, 230, 230),
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              );
+            } else {
+              // ⌨️ typing text
+              final count =
+                  _charCount.value.clamp(0, _firstText.length);
+              final visible = _firstText.substring(0, count);
+
+              text = Text(
+                visible,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                  color: const Color.fromARGB(255, 230, 230, 230),
+                  letterSpacing: 0.4,
+                ),
+              );
+            }
+
+            return text;
+          },
+        ),
+      ),
+    );
+  }
+}
+
+
+
 
