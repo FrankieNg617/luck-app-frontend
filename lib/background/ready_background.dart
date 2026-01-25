@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 
 class ReadyBackground extends StatefulWidget {
   final Widget? child;
+  final ValueNotifier<bool> hideHintText;
 
   const ReadyBackground({
     super.key,
     this.child,
+    required this.hideHintText,
   });
 
   @override
@@ -66,6 +68,9 @@ class _ReadyBackgroundState extends State<ReadyBackground>
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final bottomPadding = (size.height * 0.08).clamp(28.0, 56.0);
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -123,8 +128,22 @@ class _ReadyBackgroundState extends State<ReadyBackground>
           ),
 
           // ================= HINT TEXT =================
-          const TypingHintText(
-            username: 'Frankie',
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bottomPadding,
+            child: ValueListenableBuilder<bool>(
+              valueListenable: widget.hideHintText,
+              builder: (context, hidden, _) {
+                return AnimatedOpacity(
+                  duration: const Duration(milliseconds: 220),
+                  opacity: hidden ? 0.0 : 1.0,
+                  child: const TypingHintText(
+                    username: 'Frankie',
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ],
@@ -393,7 +412,7 @@ class _TypingHintTextState extends State<TypingHintText>
 
     _controller.forward().then((_) async {
       // pause after typing
-      await Future.delayed(const Duration(milliseconds: 2000));
+      await Future.delayed(const Duration(milliseconds: 1500));
       if (!mounted) return;
 
       _playFadeIn();
@@ -427,42 +446,20 @@ class _TypingHintTextState extends State<TypingHintText>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+
+    // responsive font size
     final fontSize = (size.width * 0.045).clamp(14.0, 20.0);
-    final bottomPadding = (size.height * 0.08).clamp(28.0, 56.0);
 
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: bottomPadding,
-      child: IgnorePointer(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            Widget text;
-
-            if (_showSecond) {
-              // 🌫️ fade-in text
-              text = Opacity(
-                opacity: _fade.value,
-                child: Text(
-                  _secondText,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.w500,
-                    color: const Color.fromARGB(255, 230, 230, 230),
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              );
-            } else {
-              // ⌨️ typing text
-              final count =
-                  _charCount.value.clamp(0, _firstText.length);
-              final visible = _firstText.substring(0, count);
-
-              text = Text(
-                visible,
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          if (_showSecond) {
+            // 🌫️ second text fades in (NO typing)
+            return Opacity(
+              opacity: _fade.value.clamp(0.0, 1.0),
+              child: Text(
+                _secondText,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: fontSize,
@@ -470,12 +467,25 @@ class _TypingHintTextState extends State<TypingHintText>
                   color: const Color.fromARGB(255, 230, 230, 230),
                   letterSpacing: 0.4,
                 ),
-              );
-            }
+              ),
+            );
+          } else {
+            // ⌨️ typing animation for first text
+            final count = _charCount.value.clamp(0, _firstText.length);
+            final visible = _firstText.substring(0, count);
 
-            return text;
-          },
-        ),
+            return Text(
+              visible,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w500,
+                color: const Color.fromARGB(255, 230, 230, 230),
+                letterSpacing: 0.4,
+              ),
+            );
+          }
+        },
       ),
     );
   }

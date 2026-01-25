@@ -20,6 +20,7 @@ class _ReadyScreenState extends State<ReadyScreen>
   bool _locked = false;
 
   final Widget _home = const HomeScreen();
+  final ValueNotifier<bool> hideHintText = ValueNotifier(false);
 
   @override
   void initState() {
@@ -27,17 +28,17 @@ class _ReadyScreenState extends State<ReadyScreen>
 
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 720),
+      duration: const Duration(milliseconds: 1000),
     );
 
-    _zoom = Tween<double>(begin: 1.0, end: 8.0).animate(
+    _zoom = Tween<double>(begin: 1.0, end: 22.0).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInCubic),
     );
 
     // ✅ Start fading Home in near the end of the zoom
     _homeFadeIn = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.78, 1.0, curve: Curves.easeOut),
+      curve: const Interval(0.80, 1.0, curve: Curves.easeOut),
     );
 
     _ctrl.addStatusListener((status) {
@@ -57,8 +58,10 @@ class _ReadyScreenState extends State<ReadyScreen>
     if (_locked) return;
     _locked = true;
 
-    VignetteController.opacity.value = 1.0;
+    // hide hint text
+    hideHintText.value = true;
 
+    VignetteController.opacity.value = 1.0;
     _ctrl.forward(from: 0.0);
   }
 
@@ -90,7 +93,7 @@ class _ReadyScreenState extends State<ReadyScreen>
                 Transform.scale(
                   scale: _zoom.value,
                   alignment: Alignment(0.15, 0.12), // <-- zoom destination (focal point)
-                  child: const ReadyBackground(child: null),
+                  child: ReadyBackground(hideHintText: hideHintText),
                 ),
 
                 // ✅ Home fades in during the end of zoom (smooth handoff)

@@ -13,7 +13,10 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell>
     with SingleTickerProviderStateMixin {
   late final AnimationController _vignetteCtrl;
-  late final Animation<double> _opacity;
+  late final Animation<double> _fadeInOpacity;
+  late final Animation<double> _fadeOutOpacity;
+
+  bool _isFadingIn = false;
 
   @override
   void initState() {
@@ -21,12 +24,19 @@ class _AppShellState extends State<AppShell>
 
     _vignetteCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 320),
+      duration: const Duration(milliseconds: 1000),
     );
 
-    _opacity = CurvedAnimation(
+    // Fade in anim
+    _fadeInOpacity = CurvedAnimation(
       parent: _vignetteCtrl,
-      curve: Curves.easeInOut,
+      curve:  const Interval(0.80, 1.0, curve: Curves.easeInOut),
+    );
+
+    // Fade out
+    _fadeOutOpacity = CurvedAnimation(
+      parent: _vignetteCtrl,
+      curve: Curves.easeOut, 
     );
 
     // Listen to global vignette requests
@@ -37,9 +47,13 @@ class _AppShellState extends State<AppShell>
     if (!mounted) return;
 
     if (VignetteController.opacity.value > 0) {
-      _vignetteCtrl.forward();
+      // Fade in
+      _isFadingIn = true;
+      _vignetteCtrl.forward(from: 0.0);
     } else {
-      _vignetteCtrl.reverse();
+      // Fade out 
+      _isFadingIn = false;
+      _vignetteCtrl.reverse(from: 1.0);
     }
   }
 
@@ -58,9 +72,18 @@ class _AppShellState extends State<AppShell>
         widget.child,
 
         IgnorePointer(
-          child: FadeTransition(
-            opacity: _opacity,
-            child: const EyepieceVignette(),
+          child: AnimatedBuilder(
+            animation: _vignetteCtrl,
+            builder: (_, __) {
+              final opacity = _isFadingIn
+                  ? _fadeInOpacity.value
+                  : _fadeOutOpacity.value;
+
+              return Opacity(
+                opacity: opacity.clamp(0.0, 1.0),
+                child: const EyepieceVignette(),
+              );
+            },
           ),
         ),
       ],

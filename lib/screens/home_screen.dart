@@ -7,9 +7,28 @@ import '../widgets/dos_donts_widget.dart';
 import '../widgets/daily_tasks_widget.dart';
 import '../widgets/header_widget.dart';
 import '../background/galaxy_background_comic.dart';
+import '../controllers/vignette_controller.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => HomeScreenState();
+}
+
+class HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Fade vignette AFTER HomeScreen has rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // keep vignette for a monment 
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      VignetteController.opacity.value = 0.0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +59,10 @@ class HomeScreen extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
                 children: [
                   // const HeaderWidget(),
                   // const SizedBox(height: 18),
