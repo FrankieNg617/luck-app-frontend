@@ -17,16 +17,27 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
+  bool showUI = false;
+
   @override
   void initState() {
     super.initState();
 
     // Fade vignette AFTER HomeScreen has rendered
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // keep vignette for a monment 
+      // keep vignette for a monment
       await Future.delayed(const Duration(milliseconds: 1500));
 
       VignetteController.opacity.value = 0.0;
+
+      // Wait for vignette fade anim to finish
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      if (!mounted) return;
+
+      setState(() {
+        showUI = true;
+      });
     });
   }
 
@@ -64,44 +75,46 @@ class HomeScreenState extends State<HomeScreen> {
                   vertical: 10,
                 ),
                 children: [
-                  // const HeaderWidget(),
-                  // const SizedBox(height: 18),
+                  if (showUI) ...[
+                    const HeaderWidget(),
+                    const SizedBox(height: 18),
 
-                  // Row(
-                  //   crossAxisAlignment: CrossAxisAlignment.start,
-                  //   children: [
-                  //     OverallScoreWidget(score: overall),
-                  //     const SizedBox(width: 14),
-                  //     Expanded(
-                  //       child: AspectBarsWidget(
-                  //         career: career,
-                  //         study: study,
-                  //         love: love,
-                  //         social: social,
-                  //         fortune: fortune,
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        OverallScoreWidget(score: overall),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: AspectBarsWidget(
+                            career: career,
+                            study: study,
+                            love: love,
+                            social: social,
+                            fortune: fortune,
+                          ),
+                        ),
+                      ],
+                    ),
 
-                  // const SizedBox(height: 22),
-                  // LifeAdviceWidget(advice: advice),
+                    const SizedBox(height: 22),
+                    LifeAdviceWidget(advice: advice),
 
-                  // const SizedBox(height: 20),
-                  // LuckyItemsWidget(
-                  //   food: food,
-                  //   numbers: numbers,
-                  //   colour: colour,
-                  //   time: time,
-                  // ),
+                    const SizedBox(height: 20),
+                    LuckyItemsWidget(
+                      food: food,
+                      numbers: numbers,
+                      colour: colour,
+                      time: time,
+                    ),
 
-                  // const SizedBox(height: 20),
-                  // DosDontsWidget(dos: dos, donts: donts),
+                    const SizedBox(height: 20),
+                    DosDontsWidget(dos: dos, donts: donts),
 
-                  // const SizedBox(height: 20),
-                  // DailyTasksWidget(initialTasks: tasks),
+                    const SizedBox(height: 20),
+                    DailyTasksWidget(initialTasks: tasks),
 
-                  // const SizedBox(height: 18),
+                    const SizedBox(height: 18),
+                  ],
                 ],
               ),
             ),
