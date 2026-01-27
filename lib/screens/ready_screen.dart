@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../background/ready_background.dart';
 import 'home_screen.dart';
+import '../background/home_background.dart';
 import '../controllers/vignette_controller.dart';
 
 class ReadyScreen extends StatefulWidget {
@@ -100,7 +101,7 @@ class _ReadyScreenState extends State<ReadyScreen>
                 IgnorePointer(
                   child: Opacity(
                     opacity: _homeFadeIn.value.clamp(0.0, 1.0),
-                    child: _home,
+                    child: const HomeBackground(child: SizedBox.shrink()),
                   ),
                 ),
               ],

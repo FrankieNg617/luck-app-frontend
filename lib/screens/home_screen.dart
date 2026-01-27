@@ -6,7 +6,7 @@ import '../widgets/lucky_items_widget.dart';
 import '../widgets/dos_donts_widget.dart';
 import '../widgets/daily_tasks_widget.dart';
 import '../widgets/header_widget.dart';
-import '../background/galaxy_background_comic.dart';
+import '../background/home_background.dart';
 import '../controllers/vignette_controller.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -64,7 +64,7 @@ class HomeScreenState extends State<HomeScreen> {
     final time = "8AM-10AM";
 
     return Scaffold(
-      body: GalaxyBackgroundComic(
+      body: HomeBackground(
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
