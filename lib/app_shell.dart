@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:luck_app/overlays/iris_overlay.dart';
 import 'controllers/vignette_controller.dart';
 import 'overlays/eyepiece_vignette.dart';
 
@@ -24,7 +25,7 @@ class _AppShellState extends State<AppShell>
 
     _vignetteCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 750),
     );
 
     // Fade in anim
@@ -86,6 +87,8 @@ class _AppShellState extends State<AppShell>
             },
           ),
         ),
+
+        const IrisOverlay(),
       ],
     );
   }

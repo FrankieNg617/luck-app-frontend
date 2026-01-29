@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:luck_app/controllers/iris_controller.dart';
 import '../background/ready_background.dart';
 import 'home_screen.dart';
 import '../background/home_background.dart';
@@ -19,6 +20,8 @@ class _ReadyScreenState extends State<ReadyScreen>
   late final Animation<double> _homeFadeIn;
 
   bool _locked = false;
+  bool _irisClosed = false;
+  static const double _irisCloseAt = 0.60;
 
   final Widget _home = const HomeScreen();
   final ValueNotifier<bool> hideHintText = ValueNotifier(false);
@@ -29,12 +32,13 @@ class _ReadyScreenState extends State<ReadyScreen>
 
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 750),
     );
 
-    _zoom = Tween<double>(begin: 1.0, end: 22.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInCubic),
-    );
+    _zoom = Tween<double>(
+      begin: 1.0,
+      end: 6.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInCubic));
 
     // ✅ Start fading Home in near the end of the zoom
     _homeFadeIn = CurvedAnimation(
@@ -42,9 +46,27 @@ class _ReadyScreenState extends State<ReadyScreen>
       curve: const Interval(0.80, 1.0, curve: Curves.easeOut),
     );
 
+    Future<void> handleZoomFinished() async {
+      await Future.delayed(const Duration(milliseconds: 120));
+      
+      if (!mounted) return;
+      _swapToHomeInstant();
+
+      await Future.delayed(const Duration(milliseconds: 80));
+      IrisController.open(); // reopen into vignette
+    }
+
     _ctrl.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        _swapToHomeInstant();
+        handleZoomFinished();
+      }
+    });
+
+    _ctrl.addListener(() {
+      // start iris close near end of zoom
+      if (!_irisClosed && _ctrl.value >= _irisCloseAt) {
+        _irisClosed = true;
+        IrisController.close();
       }
     });
   }
@@ -52,6 +74,7 @@ class _ReadyScreenState extends State<ReadyScreen>
   @override
   void dispose() {
     _ctrl.dispose();
+    hideHintText.dispose();
     super.dispose();
   }
 
@@ -62,7 +85,7 @@ class _ReadyScreenState extends State<ReadyScreen>
     // hide hint text
     hideHintText.value = true;
 
-    VignetteController.opacity.value = 1.0;
+    //VignetteController.opacity.value = 1.0;
     _ctrl.forward(from: 0.0);
   }
 
@@ -93,7 +116,10 @@ class _ReadyScreenState extends State<ReadyScreen>
                 // ✅ Ready background zooms in
                 Transform.scale(
                   scale: _zoom.value,
-                  alignment: Alignment(0.15, 0.12), // <-- zoom destination (focal point)
+                  alignment: Alignment(
+                    0.15,
+                    0.12,
+                  ), // <-- zoom destination (focal point)
                   child: ReadyBackground(hideHintText: hideHintText),
                 ),
 
@@ -112,4 +138,3 @@ class _ReadyScreenState extends State<ReadyScreen>
     );
   }
 }
-
