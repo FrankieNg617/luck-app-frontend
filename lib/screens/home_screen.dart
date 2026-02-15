@@ -7,7 +7,6 @@ import '../widgets/dos_donts_widget.dart';
 import '../widgets/daily_tasks_widget.dart';
 import '../widgets/header_widget.dart';
 import '../background/home_background.dart';
-import '../controllers/vignette_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,15 +22,9 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // Fade vignette AFTER HomeScreen has rendered
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // keep vignette for a monment
-      await Future.delayed(const Duration(milliseconds: 1500));
-
-      VignetteController.opacity.value = 0.0;
-
-      // Wait for vignette fade anim to finish
-      await Future.delayed(const Duration(milliseconds: 1000));
+      // small delay before the UI pop up
+      await Future.delayed(const Duration(milliseconds: 700));
 
       if (!mounted) return;
 

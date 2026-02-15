@@ -17,10 +17,10 @@ class FortuneApp extends StatelessWidget {
       title: 'Daily Luck',
       theme: FortuneTheme.lightTheme(),
 
-      // ✅ Navigator lives here
+      // Navigator lives here
       home: const ReadyScreen(),
 
-      // ✅ AppShell wraps ALL routes and NEVER rebuilds
+      // AppShell wraps ALL routes and NEVER rebuilds
       builder: (context, child) {
         return AppShell(
           child: child ?? const SizedBox.shrink(),

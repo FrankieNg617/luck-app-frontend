@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:luck_app/controllers/iris_controller.dart';
+import 'package:luck_app/main_shell.dart';
 import '../background/ready_background.dart';
 import 'home_screen.dart';
 import '../background/home_background.dart';
-import '../controllers/vignette_controller.dart';
 
 class ReadyScreen extends StatefulWidget {
   const ReadyScreen({super.key});
@@ -21,9 +21,9 @@ class _ReadyScreenState extends State<ReadyScreen>
 
   bool _locked = false;
   bool _irisClosed = false;
-  static const double _irisCloseAt = 0.60;
+  static const double _irisCloseAt = 0.35;
 
-  final Widget _home = const HomeScreen();
+  final Widget _home = const MainShell();
   final ValueNotifier<bool> hideHintText = ValueNotifier(false);
 
   @override
@@ -43,7 +43,7 @@ class _ReadyScreenState extends State<ReadyScreen>
     // ✅ Start fading Home in near the end of the zoom
     _homeFadeIn = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.80, 1.0, curve: Curves.easeOut),
+      curve: const Interval(0.90, 1.0, curve: Curves.easeOut),
     );
 
     Future<void> handleZoomFinished() async {
@@ -90,7 +90,7 @@ class _ReadyScreenState extends State<ReadyScreen>
   }
 
   void _swapToHomeInstant() {
-    // ✅ Instant swap so there's NO "big zoomed ready screen pause"
+    // Instant swap so there's NO "big zoomed ready screen pause"
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: Duration.zero,

@@ -19,7 +19,7 @@ class _IrisOverlayState extends State<IrisOverlay>
 
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 600),
     );
 
     _radius = CurvedAnimation(
