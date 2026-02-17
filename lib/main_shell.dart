@@ -20,10 +20,17 @@ class _MainShellState extends State<MainShell> {
     ProfileScreen(),
   ];
 
+  // Navigation bar colors per page
+  final List<Color> _navColors = const [
+    Color.fromARGB(255, 39, 9, 65), // Home 
+    Colors.black,      // Zodiac 
+    Color(0xFF1C1C1C), // Profile 
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final navColor = _navColors[_index];
     final h = MediaQuery.of(context).size.height;
-
     final iconSize = (h * 0.02).clamp(22.0, 30.0);
 
     return Scaffold(
@@ -37,7 +44,7 @@ class _MainShellState extends State<MainShell> {
         showSelectedLabels: false,
         showUnselectedLabels: false,
 
-        backgroundColor: const Color.fromARGB(255, 39, 9, 65),
+        backgroundColor: navColor,
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white.withValues(alpha: 0.4),
 
