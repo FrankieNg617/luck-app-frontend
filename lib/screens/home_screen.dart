@@ -69,7 +69,7 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
                 children: [
                   if (showUI) ...[
-                    const HeaderWidget(),
+                    const HeaderWidget(username: "Frankie", zodiac: "Scorpio",),
                     const SizedBox(height: 18),
 
                     Row(

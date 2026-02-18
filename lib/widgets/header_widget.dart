@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../ui/fortune_style.dart';
 
 class HeaderWidget extends StatefulWidget {
-  const HeaderWidget({super.key});
+  final String username;
+  final String zodiac;
+
+  const HeaderWidget({super.key, required this.username, required this.zodiac});
 
   @override
   State<HeaderWidget> createState() => _HeaderWidgetState();
@@ -23,10 +25,7 @@ class _HeaderWidgetState extends State<HeaderWidget>
       duration: const Duration(milliseconds: 700),
     );
 
-    _curve = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    );
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
 
     _controller.forward(from: 0.0);
   }
@@ -38,7 +37,15 @@ class _HeaderWidgetState extends State<HeaderWidget>
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final screenWidth = size.width;
+
+    final iconSize = screenWidth * 0.15; // 13% of width
+    final titleSize = screenWidth * 0.05;
+    final dateSize = screenWidth * 0.032;
+
     final formattedDate = DateFormat('EEEE, MMM d').format(DateTime.now());
 
     return AnimatedBuilder(
@@ -50,53 +57,41 @@ class _HeaderWidgetState extends State<HeaderWidget>
           offset: Offset(0, (1 - t) * -35),
           child: Opacity(
             opacity: t,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        child: const Icon(Icons.wb_sunny, color: Colors.white, size: 25),
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: screenWidth * 0.05),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      _getZodiacAsset(widget.zodiac),
+                      width: iconSize,
+                      height: iconSize,
+                    ),
+
+                    SizedBox(height: screenWidth * 0.01),
+
+                    Text(
+                      "${widget.username} - ${widget.zodiac}",
+                      style: TextStyle(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Daily Luck',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Color.fromARGB(255, 255, 255, 255),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_month,
-                                size: 14,
-                                color: Color.fromARGB(255, 179, 175, 172),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                formattedDate,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color.fromARGB(255, 194, 190, 187),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                      textAlign: TextAlign.center,
+                    ),
+
+                    SizedBox(height: screenWidth * 0.015),
+
+                    Text(
+                      formattedDate,
+                      style: TextStyle(
+                        fontSize: dateSize,
+                        color: const Color.fromARGB(255, 194, 190, 187),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -104,4 +99,8 @@ class _HeaderWidgetState extends State<HeaderWidget>
       },
     );
   }
+}
+
+String _getZodiacAsset(String zodiac) {
+  return 'assets/zodiac/${zodiac.toLowerCase()}.png';
 }
