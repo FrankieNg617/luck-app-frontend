@@ -1,23 +1,24 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../background/zodiac_info_background.dart';
 import '../background/zodiac_background.dart';
 
 class ZodiacScreen extends StatelessWidget {
   const ZodiacScreen({super.key});
 
   static const _signs = <String>[
-    'Aries',
     'Pisces',
-    'Aquarius',
-    'Capricorn',
-    'Sagittarius',
-    'Scorpio',
-    'Libra',
-    'Virgo',
-    'Leo',
-    'Cancer',
-    'Gemini',
+    'Aries',
     'Taurus',
+    'Gemini',
+    'Cancer',
+    'Leo',
+    'Virgo',
+    'Libra',
+    'Scorpio',
+    'Sagittarius',
+    'Capricorn',
+    'Aquarius',
   ];
 
   // IMPORTANT:
@@ -33,37 +34,94 @@ class ZodiacScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: ZodiacBackground(
-        child: Center(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final size = math.min(
-                constraints.maxWidth,
-                constraints.maxHeight,
-              );
-              return SizedBox(
-                width: size,
-                height: size,
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: _TappableZodiacChart(
-                    imageProvider: const AssetImage(
-                      'assets/zodiac/zodiac_chart.png',
-                    ),
-                    onSignTap: (sign) {
-                      // Navigate however you like:
-                      // Navigator.pushNamed(context, '/zodiac/$sign');
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ZodiacInfoPage(sign: sign),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final h = constraints.maxHeight;
+
+            // Responsive scale (390 is a common design baseline width)
+            final scale = (math.min(w, h) / 390.0).clamp(0.85, 1.25);
+
+            // Chart size
+            final chartSize = math.min(w, h);
+
+            // Responsive spacing + typography
+            final gapAfterChart = 24.0 * scale;
+            final gapAfterTitle = 12.0 * scale;
+
+            final titleSize = 26.0 * scale;
+            final bodySize = 15.0 * scale;
+
+            final horizontalPadding = (32.0 * scale).clamp(18.0, 48.0);
+
+            return Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ================= CHART =================
+                    SizedBox(
+                      width: chartSize,
+                      height: chartSize,
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: _TappableZodiacChart(
+                          imageProvider: const AssetImage(
+                            'assets/zodiac/zodiac_chart2.png',
+                          ),
+                          onSignTap: (sign) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ZodiacInfoPage(sign: sign),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+
+                    SizedBox(height: gapAfterChart),
+
+                    // ================= TITLE =================
+                    Text(
+                      'Zodiac Chart',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white70,
+                        letterSpacing: 1.2 * scale,
+                        height: 1.1,
+                      ),
+                    ),
+
+                    SizedBox(height: gapAfterTitle),
+
+                    // ================= DESCRIPTION =================
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                      ),
+                      child: Text(
+                        "Zodiac chart is a diagram based on 12 zodiac signs. "
+                        "How sun, moon, and planets were located when you were born "
+                        "provides insights into your character and life's potential. "
+                        "Tap your zodiac to explore more.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: bodySize,
+                          height: 1.6,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -142,8 +200,32 @@ class ZodiacInfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(sign)),
-      body: Center(child: Text('Info about $sign')),
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
+
+      appBar: AppBar(
+        title: Text(
+          sign,
+          style: const TextStyle(color: Colors.white70),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0, 
+        iconTheme: const IconThemeData(color: Colors.white70),
+      ),
+
+      body: ZodiacInfoBackground(
+        child: Center(
+          child: Text(
+            'Info about $sign',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
+

@@ -57,6 +57,7 @@ class HomeScreenState extends State<HomeScreen> {
     final time = "8AM-10AM";
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: HomeBackground(
         child: SafeArea(
           child: Center(
