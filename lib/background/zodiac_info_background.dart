@@ -55,6 +55,7 @@ class _ZodiacInfoBackgroundState extends State<ZodiacInfoBackground>
       children: [
         const ColoredBox(
           color: Color.fromARGB(255, 16, 15, 52),
+          //color: Color.fromARGB(255, 199, 192, 192),
         ),
 
         // ===== SMALL DOT STARS =====

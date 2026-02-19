@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../background/zodiac_info_background.dart';
 import '../background/zodiac_background.dart';
+import '../widgets/zodiac_info_widget.dart';
 
 class ZodiacScreen extends StatelessWidget {
   const ZodiacScreen({super.key});
@@ -69,7 +70,7 @@ class ZodiacScreen extends StatelessWidget {
                         aspectRatio: 1,
                         child: _TappableZodiacChart(
                           imageProvider: const AssetImage(
-                            'assets/zodiac/zodiac_chart2.png',
+                            'assets/zodiac_chart/zodiac_chart2.png',
                           ),
                           onSignTap: (sign) {
                             Navigator.of(context).push(
@@ -197,6 +198,13 @@ class ZodiacInfoPage extends StatelessWidget {
   const ZodiacInfoPage({super.key, required this.sign});
   final String sign;
 
+  String _signAssetPath(String sign) {
+    // Convert "Capricorn" -> "capricorn" etc.
+    final file = sign.trim().toLowerCase().replaceAll(' ', '_');
+    //return 'assets/zodiac_signs/$file.png';
+    return 'assets/zodiac_signs/zodiactest3.png';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -204,28 +212,86 @@ class ZodiacInfoPage extends StatelessWidget {
       backgroundColor: Colors.transparent,
 
       appBar: AppBar(
-        title: Text(
-          sign,
-          style: const TextStyle(color: Colors.white70),
-        ),
+        title: Text(sign, style: const TextStyle(color: Colors.white70)),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0, 
+        scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: Colors.white70),
       ),
 
       body: ZodiacInfoBackground(
-        child: Center(
-          child: Text(
-            'Info about $sign',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-            ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final h = constraints.maxHeight;
+
+              final scale = (math.min(w, h) / 390.0).clamp(0.85, 1.25);
+
+              // This controls the "fixed location" from top of screen
+              final fixedTopOffset = (h * 0.06).clamp(12.0, 48.0);
+              final between = (14.0 * scale).clamp(10.0, 20.0);
+              final imageSize = (math.min(w, h) * 0.60 * scale).clamp(
+                72.0,
+                440.0,
+              );
+              final signTextSize = (22.0 * scale).clamp(18.0, 30.0);
+
+
+              return SingleChildScrollView(
+                // Scroll only when content is taller than screen
+                child: ConstrainedBox(
+                  // When content is short, still fill the viewport so the top offset stays stable
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Align(
+                    // IMPORTANT: top anchored (not centered)
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        top: fixedTopOffset,
+                        bottom: (24.0 * scale).clamp(16.0, 40.0),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ===== Sign Image =====
+                          Image.asset(
+                            _signAssetPath(sign),
+                            width: imageSize,
+                            height: imageSize,
+                            fit: BoxFit.contain,
+                          ),
+
+                          SizedBox(height: between),
+
+                          // ===== Sign Text =====
+                          Text(
+                            sign,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: signTextSize,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.6 * scale,
+                              height: 1.1,
+                            ),
+                          ),
+
+                          SizedBox(height: (18.0 * scale).clamp(12.0, 26.0)),
+
+                          // ===== Info Card (grows downward) =====
+                          ZodiacInfoWidget(sign: sign),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 }
-

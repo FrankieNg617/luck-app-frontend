@@ -102,5 +102,5 @@ class _HeaderWidgetState extends State<HeaderWidget>
 }
 
 String _getZodiacAsset(String zodiac) {
-  return 'assets/zodiac/${zodiac.toLowerCase()}.png';
+  return 'assets/zodiac_symbols/${zodiac.toLowerCase()}.png';
 }
