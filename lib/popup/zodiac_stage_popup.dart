@@ -1,12 +1,9 @@
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class ZodiacStagePopup extends StatelessWidget {
-  const ZodiacStagePopup({
-    super.key,
-    required this.title,
-    required this.body,
-  });
+  const ZodiacStagePopup({super.key, required this.title, required this.body});
 
   final String title;
   final String body;
@@ -16,10 +13,80 @@ class ZodiacStagePopup extends StatelessWidget {
     required String title,
     required String body,
   }) {
-    return showDialog<void>(
+    return showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => ZodiacStagePopup(title: title, body: body),
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.transparent, // important for blur
+      transitionDuration: const Duration(milliseconds: 520),
+      pageBuilder: (_, __, ___) {
+        return ZodiacStagePopup(title: title, body: body);
+      },
+      transitionBuilder: (context, anim, _, child) {
+        final isClosing = anim.status == AnimationStatus.reverse;
+
+        final curved = CurvedAnimation(
+          parent: anim,
+          curve: const _SpringyCurve(), // open spring
+          reverseCurve: Curves
+              .easeOutCubic, // base close curve (we’ll add bounce manually)
+        );
+
+        final fade = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+
+        // ----- Open scale (spring) -----
+        final openScale = Tween<double>(
+          begin: 0.86,
+          end: 1.0,
+        ).animate(curved).value;
+
+        // ----- Close scale (bounce) -----
+        final t = anim.value; // 1 -> 0 when closing
+        double closeScale;
+
+        if (t > 0.85) {
+          // small "pop" at start of closing: 1.00 -> 1.03
+          final u = (1.0 - t) / 0.15; // 0..1
+          closeScale = 1.0 + 0.06 * u;
+        } else {
+          // then shrink down: 1.03 -> 0.78
+          final u = (t / 0.85).clamp(0.0, 1.0); // 1..0
+          closeScale = 0.78 + (1.03 - 0.78) * math.pow(u, 1.6);
+        }
+
+        final popupScale = isClosing ? closeScale : openScale;
+
+        return FadeTransition(
+          opacity: fade,
+          child: Stack(
+            children: [
+              // ===== Blurred Background =====
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: 3 * anim.value,
+                      sigmaY: 3 * anim.value,
+                    ),
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.35 * anim.value),
+                    ),
+                  ),
+                ),
+              ),
+
+              // ===== Popup with bounce close =====
+              Center(
+                child: Transform.scale(scale: popupScale, child: child),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -59,9 +126,7 @@ class ZodiacStagePopup extends StatelessWidget {
             children: [
               // ===== Content =====
               Padding(
-                padding: EdgeInsets.only(
-                  top: (6.0 * scale).clamp(4.0, 10.0),
-                ),
+                padding: EdgeInsets.only(top: (6.0 * scale).clamp(4.0, 10.0)),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,5 +175,18 @@ class ZodiacStagePopup extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _SpringyCurve extends Curve {
+  const _SpringyCurve();
+
+  @override
+  double transform(double t) {
+    // A small "overshoot" curve that feels springy.
+    // Values tuned to look iOS-like without being too bouncy.
+    const double s = 1.35;
+    t -= 1.0;
+    return t * t * ((s + 1) * t + s) + 1.0;
   }
 }
