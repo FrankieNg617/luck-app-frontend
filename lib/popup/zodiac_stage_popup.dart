@@ -101,46 +101,85 @@ class ZodiacStagePopup extends StatelessWidget {
     final pad = (18.0 * scale).clamp(14.0, 26.0);
 
     final titleSize = (18.0 * scale).clamp(16.0, 24.0);
-    final bodySize = (14.0 * scale).clamp(12.5, 18.0);
+    final bodySize = (24.0 * scale).clamp(12.5, 18.0);
     final iconSize = (20.0 * scale).clamp(18.0, 26.0);
 
+    // Height threshold (max 75% of screen height)
+    final maxHeight = h * 0.60;
+
     return Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
       insetPadding: EdgeInsets.symmetric(
         horizontal: (18.0 * scale).clamp(12.0, 28.0),
         vertical: (20.0 * scale).clamp(14.0, 32.0),
       ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints.tightFor(width: dialogWidth),
-        child: Container(
-          padding: EdgeInsets.all(pad),
-          decoration: BoxDecoration(
-            color: Color.fromARGB(255, 40, 39, 67),
-            borderRadius: BorderRadius.circular(18.0 * scale),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.14),
-              width: 1,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: dialogWidth,
+              maxHeight: maxHeight, // important
             ),
-          ),
-          child: Stack(
-            children: [
-              // ===== Content =====
-              Padding(
-                padding: EdgeInsets.only(top: (6.0 * scale).clamp(4.0, 10.0)),
+            child: Container(
+              padding: EdgeInsets.all(pad),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(
+                  255,
+                  0,
+                  0,
+                  0,
+                ).withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(18.0 * scale),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  width: 1,
+                ),
+              ),
+              child: SingleChildScrollView(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: titleSize,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        height: 1.15,
-                      ),
+                    // ===== Title Row with X =====
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title expands fully
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: titleSize,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              height: 1.75,
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(width: (8.0 * scale).clamp(6.0, 12.0)),
+
+                        // Close button
+                        InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Padding(
+                            padding: EdgeInsets.all(
+                              (4.0 * scale).clamp(2.0, 8.0),
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              size: iconSize,
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+
                     SizedBox(height: (12.0 * scale).clamp(8.0, 18.0)),
+
+                    // ===== Body Text =====
                     Text(
                       body,
                       style: TextStyle(
@@ -152,27 +191,9 @@ class ZodiacStagePopup extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // ===== Close X Icon =====
-              Positioned(
-                top: 0,
-                right: 0,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Padding(
-                    padding: EdgeInsets.all((4.0 * scale).clamp(2.0, 8.0)),
-                    child: Icon(
-                      Icons.close,
-                      size: iconSize,
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
