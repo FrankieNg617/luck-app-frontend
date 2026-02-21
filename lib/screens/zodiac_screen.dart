@@ -201,8 +201,7 @@ class ZodiacInfoPage extends StatelessWidget {
   String _signAssetPath(String sign) {
     // Convert "Capricorn" -> "capricorn" etc.
     final file = sign.trim().toLowerCase().replaceAll(' ', '_');
-    //return 'assets/zodiac_signs/$file.png';
-    return 'assets/zodiac_signs/zodiactest3.png';
+    return 'assets/zodiac_signs/$file.png';
   }
 
   @override
@@ -231,7 +230,7 @@ class ZodiacInfoPage extends StatelessWidget {
 
               // This controls the "fixed location" from top of screen
               final fixedTopOffset = (h * 0.06).clamp(12.0, 48.0);
-              final between = (14.0 * scale).clamp(10.0, 20.0);
+              final between = (26.0 * scale).clamp(15.0, 20.0);
               final imageSize = (math.min(w, h) * 0.60 * scale).clamp(
                 72.0,
                 440.0,
@@ -266,19 +265,19 @@ class ZodiacInfoPage extends StatelessWidget {
                           SizedBox(height: between),
 
                           // ===== Sign Text =====
-                          Text(
-                            sign,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: signTextSize,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.6 * scale,
-                              height: 1.1,
-                            ),
-                          ),
+                          // Text(
+                          //   sign,
+                          //   textAlign: TextAlign.center,
+                          //   style: TextStyle(
+                          //     fontSize: signTextSize,
+                          //     fontWeight: FontWeight.w700,
+                          //     color: Colors.white,
+                          //     letterSpacing: 0.6 * scale,
+                          //     height: 1.1,
+                          //   ),
+                          // ),
 
-                          SizedBox(height: (18.0 * scale).clamp(12.0, 26.0)),
+                          //SizedBox(height: (35.0 * scale).clamp(12.0, 36.0)),
 
                           // ===== Info Card (grows downward) =====
                           ZodiacInfoWidget(sign: sign),
