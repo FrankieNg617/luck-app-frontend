@@ -3,6 +3,7 @@ import 'package:flutter/physics.dart';
 import '../screens/home_screen.dart';
 import '../screens/zodiac_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/love_calculator_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -19,6 +20,7 @@ class _MainShellState extends State<MainShell>
   final List<Widget> _pages = const [
     HomeScreen(),
     ZodiacScreen(),
+    LoveCalculatorScreen(),
     ProfileScreen(),
   ];
 
@@ -26,6 +28,7 @@ class _MainShellState extends State<MainShell>
   final List<Color> _navColors = const [
     Color.fromARGB(255, 29, 15, 59), // Home
     Colors.black, // Zodiac
+    Colors.black, // Love Cal
     Color(0xFF1C1C1C), // Profile
   ];
 
@@ -59,11 +62,7 @@ class _MainShellState extends State<MainShell>
     // iOS-ish spring feel:
     // - lower stiffness => softer
     // - higher damping => less bounce
-    const spring = SpringDescription(
-      mass: 1.0,
-      stiffness: 100.0,
-      damping: 7.0,
-    );
+    const spring = SpringDescription(mass: 1.0, stiffness: 100.0, damping: 7.0);
 
     // Animate value from 0 -> 1 with spring physics
     final sim = SpringSimulation(spring, 0.0, 1.0, 8.0);
@@ -89,7 +88,7 @@ class _MainShellState extends State<MainShell>
 
     // Pop amount (bigger when controller is near 0, settle at 1)
     // maxPop: how much it scales up at the "pop" moment
-    const maxPop = 0.005; 
+    const maxPop = 0.005;
     final scaleAnim = _popCtrl.drive(
       Tween<double>(begin: 1.0 + maxPop, end: 1.0),
     );
@@ -132,6 +131,11 @@ class _MainShellState extends State<MainShell>
           BottomNavigationBarItem(
             icon: Icon(Icons.auto_awesome_outlined),
             activeIcon: Icon(Icons.auto_awesome),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border),
+            activeIcon: Icon(Icons.favorite),
             label: '',
           ),
           BottomNavigationBarItem(
