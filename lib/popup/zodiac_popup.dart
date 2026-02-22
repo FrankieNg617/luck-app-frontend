@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class ZodiacStagePopup extends StatelessWidget {
-  const ZodiacStagePopup({super.key, required this.title, required this.body});
+class ZodiacPopup extends StatelessWidget {
+  const ZodiacPopup({super.key, required this.title, required this.body});
 
   final String title;
   final String body;
@@ -20,16 +20,15 @@ class ZodiacStagePopup extends StatelessWidget {
       barrierColor: Colors.transparent, // important for blur
       transitionDuration: const Duration(milliseconds: 520),
       pageBuilder: (_, __, ___) {
-        return ZodiacStagePopup(title: title, body: body);
+        return ZodiacPopup(title: title, body: body);
       },
       transitionBuilder: (context, anim, _, child) {
         final isClosing = anim.status == AnimationStatus.reverse;
 
         final curved = CurvedAnimation(
           parent: anim,
-          curve: const _SpringyCurve(), // open spring
-          reverseCurve: Curves
-              .easeOutCubic, // base close curve (we’ll add bounce manually)
+          curve: const _SpringyCurve(),
+          reverseCurve: Curves.easeOutCubic,
         );
 
         final fade = Tween<double>(
@@ -37,54 +36,51 @@ class ZodiacStagePopup extends StatelessWidget {
           end: 1.0,
         ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
 
-        // ----- Open scale (spring) -----
+        // ----- Open scale -----
         final openScale = Tween<double>(
           begin: 0.86,
           end: 1.0,
         ).animate(curved).value;
 
-        // ----- Close scale (bounce) -----
-        final t = anim.value; // 1 -> 0 when closing
+        // ----- Close bounce -----
+        final t = anim.value;
         double closeScale;
 
         if (t > 0.85) {
-          // small "pop" at start of closing: 1.00 -> 1.03
-          final u = (1.0 - t) / 0.15; // 0..1
+          final u = (1.0 - t) / 0.15;
           closeScale = 1.0 + 0.06 * u;
         } else {
-          // then shrink down: 1.03 -> 0.78
-          final u = (t / 0.85).clamp(0.0, 1.0); // 1..0
+          final u = (t / 0.85).clamp(0.0, 1.0);
           closeScale = 0.78 + (1.03 - 0.78) * math.pow(u, 1.6);
         }
 
         final popupScale = isClosing ? closeScale : openScale;
 
-        return FadeTransition(
-          opacity: fade,
-          child: Stack(
-            children: [
-              // ===== Blurred Background =====
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: 3 * anim.value,
-                      sigmaY: 3 * anim.value,
+        return Stack(
+          children: [
+            // ===== Blur =====
+            Positioned.fill(
+              child: isClosing
+                  ? const SizedBox.shrink() // blur gone immediately when closing starts
+                  : GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                        child: const ColoredBox(
+                          color: Color(0x59000000), // ~35% black
+                        ),
+                      ),
                     ),
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.35 * anim.value),
-                    ),
-                  ),
-                ),
-              ),
+            ),
 
-              // ===== Popup with bounce close =====
-              Center(
+            // ===== Animated Popup Only =====
+            FadeTransition(
+              opacity: fade,
+              child: Center(
                 child: Transform.scale(scale: popupScale, child: child),
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
@@ -104,7 +100,6 @@ class ZodiacStagePopup extends StatelessWidget {
     final bodySize = (24.0 * scale).clamp(12.5, 18.0);
     final iconSize = (20.0 * scale).clamp(18.0, 26.0);
 
-    // Height threshold (max 75% of screen height)
     final maxHeight = h * 0.60;
 
     return Dialog(

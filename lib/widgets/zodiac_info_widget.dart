@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../popup/zodiac_stage_popup.dart';
+import '../popup/zodiac_popup.dart';
 import '../data/zodiac_stage_data.dart';
 import '../data/zodiac_relationship_data.dart';
 import '../data/zodiac_relationship_detail.dart';
@@ -152,7 +152,7 @@ class ZodiacInfoWidget extends StatelessWidget {
                       textSize: buttonTextSize,
                       hPad: hPad,
                       onTap: () {
-                        ZodiacStagePopup.show(
+                        ZodiacPopup.show(
                           context,
                           title: item.label,
                           body: item.body,
@@ -277,7 +277,7 @@ class _RelationshipRow extends StatelessWidget {
                   categoryKey,
                 );
 
-                ZodiacStagePopup.show(
+                ZodiacPopup.show(
                   context,
                   title: detail.label,
                   body: detail.body,
