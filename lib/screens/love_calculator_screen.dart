@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../background/love_calculator_background.dart';
 import '../widgets/zodiac_selector.dart';
+import '../background/zodiac_info_background.dart';
+import '../widgets/love_compat_info_widget.dart';
 
 class LoveCalculatorScreen extends StatefulWidget {
   const LoveCalculatorScreen({super.key});
@@ -10,11 +13,13 @@ class LoveCalculatorScreen extends StatefulWidget {
 }
 
 class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   String? _yourSign;
   String? _partnerSign;
 
   late final AnimationController _heartCtrl;
+  late final AnimationController _ctaBounceCtrl;
+  late final Animation<double> _ctaScale;
 
   static const List<ZodiacSign> _zodiacSigns = [
     ZodiacSign(name: "Aries", symbol: "♈", dates: "Mar 21 - Apr 20"),
@@ -40,11 +45,24 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
       lowerBound: 0.92,
       upperBound: 1.08,
     )..repeat(reverse: true);
+
+    _ctaBounceCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _ctaScale = Tween<double>(
+      begin: 1.0,
+      end: 1.035,
+    ).animate(CurvedAnimation(parent: _ctaBounceCtrl, curve: Curves.easeInOut));
+
+    _syncCtaBounce();
   }
 
   @override
   void dispose() {
     _heartCtrl.dispose();
+    _ctaBounceCtrl.dispose();
     super.dispose();
   }
 
@@ -55,10 +73,27 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
   void _handleCheckCompatibility() {
     if (!_canProceed) return;
 
-    // TODO: Replace with your real navigation.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('You: $_yourSign, Partner: $_partnerSign')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LoveCompatInfoPage(
+          yourSign: _yourSign!,
+          partnerSign: _partnerSign!,
+        ),
+      ),
     );
+  }
+
+  void _syncCtaBounce() {
+    if (_canProceed) {
+      if (!_ctaBounceCtrl.isAnimating) {
+        _ctaBounceCtrl.repeat(reverse: true);
+      }
+    } else {
+      if (_ctaBounceCtrl.isAnimating) {
+        _ctaBounceCtrl.stop();
+        _ctaBounceCtrl.value = 0.0; // reset to scale=1.0
+      }
+    }
   }
 
   @override
@@ -97,7 +132,10 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: padH,
+                    vertical: padV,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -111,8 +149,9 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
                               letterSpacing: labelTracking,
                               fontWeight: FontWeight.w600,
                               fontSize: clamp(12.0 * s, 10, 13),
-                              color:
-                                  const Color(0xFFF2D27C).withValues(alpha: 0.90),
+                              color: const Color(
+                                0xFFF2D27C,
+                              ).withValues(alpha: 0.90),
                             ),
                           ),
                           SizedBox(height: gapSm),
@@ -159,7 +198,10 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
                       ZodiacSelector(
                         label: 'Your Sign',
                         value: _yourSign,
-                        onChanged: (v) => setState(() => _yourSign = v),
+                        onChanged: (v) {
+                          setState(() => _yourSign = v);
+                          _syncCtaBounce();
+                        },
                         signs: _zodiacSigns,
                         placeholder: 'Choose your zodiac',
                         maxVisibleItems: 5,
@@ -183,8 +225,9 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
                               letterSpacing: clamp(3.0 * s, 2.2, 3.5),
                               fontWeight: FontWeight.w700,
                               fontSize: clamp(13.0 * s, 10, 20),
-                              color: const Color(0xFFF2D27C)
-                                  .withValues(alpha: 0.90),
+                              color: const Color(
+                                0xFFF2D27C,
+                              ).withValues(alpha: 0.90),
                             ),
                           ),
                           SizedBox(width: clamp(12.0 * s, 10, 16)),
@@ -202,7 +245,10 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
                       ZodiacSelector(
                         label: "Partner's Sign",
                         value: _partnerSign,
-                        onChanged: (v) => setState(() => _partnerSign = v),
+                        onChanged: (v) {
+                          setState(() => _partnerSign = v);
+                          _syncCtaBounce();
+                        },
                         signs: _zodiacSigns,
                         placeholder: 'Choose their zodiac',
                         maxVisibleItems: 5,
@@ -212,38 +258,46 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
                       SizedBox(height: clamp(25.0 * s, 16, 38)),
 
                       // CTA Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: buttonH,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 180),
-                          opacity: _canProceed ? 1.0 : 0.65,
-                          child: ElevatedButton(
-                            onPressed: _canProceed ? _handleCheckCompatibility : null,
-                            style: ElevatedButton.styleFrom(
-                              elevation: 0,
-                              backgroundColor: _canProceed
-                                  ? const Color(0xFFE4547B)
-                                  : Colors.white.withValues(alpha: 0.10),
-                              foregroundColor: _canProceed
-                                  ? Colors.white
-                                  : Colors.white.withValues(alpha: 0.55),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  clamp(18.0 * s, 14, 20),
+                      ScaleTransition(
+                        scale: _ctaScale,
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: buttonH,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 180),
+                            opacity: _canProceed ? 1.0 : 0.65,
+                            child: ElevatedButton(
+                              onPressed: _canProceed
+                                  ? _handleCheckCompatibility
+                                  : null,
+                              style:
+                                  ElevatedButton.styleFrom(
+                                    elevation: 0,
+                                    backgroundColor: _canProceed
+                                        ? const Color(0xFFE4547B)
+                                        : Colors.white.withValues(alpha: 0.10),
+                                    foregroundColor: _canProceed
+                                        ? Colors.white
+                                        : Colors.white.withValues(alpha: 0.55),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        clamp(18.0 * s, 14, 20),
+                                      ),
+                                    ),
+                                  ).copyWith(
+                                    shadowColor: WidgetStatePropertyAll(
+                                      const Color(
+                                        0xFFE4547B,
+                                      ).withValues(alpha: 0.35),
+                                    ),
+                                  ),
+                              child: Text(
+                                'Check Compatibility ✨',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: clamp(16.0 * s, 14, 18),
+                                  letterSpacing: 0.4,
                                 ),
-                              ),
-                            ).copyWith(
-                              shadowColor: WidgetStatePropertyAll(
-                                const Color(0xFFE4547B).withValues(alpha: 0.35),
-                              ),
-                            ),
-                            child: Text(
-                              'Check Compatibility ✨',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: clamp(16.0 * s, 14, 18),
-                                letterSpacing: 0.4,
                               ),
                             ),
                           ),
@@ -267,6 +321,185 @@ class _LoveCalculatorScreenState extends State<LoveCalculatorScreen>
                   : content,
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class LoveCompatInfoPage extends StatelessWidget {
+  const LoveCompatInfoPage({
+    super.key,
+    required this.yourSign,
+    required this.partnerSign,
+  });
+
+  final String yourSign;
+  final String partnerSign;
+
+  String _signAssetPath(String sign) {
+    final file = sign.trim().toLowerCase().replaceAll(' ', '_');
+    return 'assets/zodiac_signs/$file.png';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: Text(
+          'Love Report',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white70),
+      ),
+
+      body: ZodiacInfoBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final h = constraints.maxHeight;
+
+              final scale = (math.min(w, h) / 390.0).clamp(0.85, 1.25);
+
+              // This controls the "fixed location" from top of screen
+              final fixedTopOffset = (h * 0.06).clamp(12.0, 48.0);
+              final between = (32.0 * scale).clamp(15.0, 40.0);
+
+              final signImageSize = (math.min(w, h) * 0.42 * scale).clamp(
+                56.0,
+                250.0,
+              );
+              final plusSize = (25.0 * scale).clamp(14.0, 32.0);
+              final plusGap = (9.0 * scale).clamp(1.0, 18.0);
+
+              return SingleChildScrollView(
+                // Scroll only when content is taller than screen
+                child: ConstrainedBox(
+                  // When content is short, still fill the viewport so the top offset stays stable
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Align(
+                    // IMPORTANT: top anchored (not centered)
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        top: fixedTopOffset,
+                        bottom: (24.0 * scale).clamp(16.0, 40.0),
+                        //left: (18.0 * scale).clamp(14.0, 26.0),
+                        //right: (18.0 * scale).clamp(14.0, 26.0),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ===== Two Sign Image Row =====
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // ===== Images Row =====
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Your Sign
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        _signAssetPath(yourSign),
+                                        width: signImageSize,
+                                        height: signImageSize,
+                                        fit: BoxFit.contain,
+                                      ),
+                                      SizedBox(
+                                        height: (8.0 * scale).clamp(6.0, 12.0),
+                                      ),
+                                      Text(
+                                        'You',
+                                        style: TextStyle(
+                                          fontSize: (16.0 * scale).clamp(
+                                            12.0,
+                                            18.0,
+                                          ),
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  SizedBox(width: plusGap),
+
+                                  // +
+                                  Text(
+                                    '+',
+                                    style: TextStyle(
+                                      fontSize: plusSize,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.45,
+                                      ),
+                                    ),
+                                  ),
+
+                                  SizedBox(width: plusGap),
+
+                                  // Partner Sign
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        _signAssetPath(partnerSign),
+                                        width: signImageSize,
+                                        height: signImageSize,
+                                        fit: BoxFit.contain,
+                                      ),
+                                      SizedBox(
+                                        height: (8.0 * scale).clamp(6.0, 12.0),
+                                      ),
+                                      Text(
+                                        'Your Partner',
+                                        style: TextStyle(
+                                          fontSize: (16.0 * scale).clamp(
+                                            12.0,
+                                            18.0,
+                                          ),
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: between),
+
+                          // ===== Info Card (grows downward) =====
+                          LoveCompatInfoWidget(
+                            yourSign: yourSign,
+                            partnerSign: partnerSign,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
