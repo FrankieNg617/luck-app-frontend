@@ -19,7 +19,7 @@ class LoveCompatInfoWidget extends StatelessWidget {
 
     final scale = (math.min(w, h) / 390.0).clamp(0.55, 2.25);
 
-    final cardWidth = (w * (0.85 * scale)).clamp(280.0, 580.0);
+    final cardWidth = (w * 0.95).clamp(280.0, 580.0);
     final pad = (18.0 * scale).clamp(14.0, 26.0);
 
     final hPad = (16.0 * scale).clamp(12.0, 22.0);

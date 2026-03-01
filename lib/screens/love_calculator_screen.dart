@@ -372,12 +372,27 @@ class LoveCompatInfoPage extends StatelessWidget {
               final fixedTopOffset = (h * 0.06).clamp(12.0, 48.0);
               final between = (32.0 * scale).clamp(15.0, 40.0);
 
-              final signImageSize = (math.min(w, h) * 0.42 * scale).clamp(
-                56.0,
-                250.0,
+              final plusSize = (26.0 * scale).clamp(14.0, 30.0);
+              final plusGap = (10.0 * scale).clamp(6.0, 16.0);
+
+              // Use padded width so the row never overflows.
+              final horizontalPadding = (12.0 * scale).clamp(8.0, 18.0);
+              final availableW = w - (horizontalPadding * 2);
+
+              // Approx width of '+' text (roughly 1em)
+              final plusW = plusSize * 0.9;
+
+              // Compute image size from available width.
+              final maxImageFromWidth =
+                  ((availableW - (plusGap * 2) - plusW) / 2).clamp(56.0, 180.0);
+
+              // Also cap by height so it doesn't get too tall.
+              final maxImageFromHeight = (h * 0.22).clamp(56.0, 200.0);
+
+              final signImageSize = math.min(
+                maxImageFromWidth,
+                maxImageFromHeight,
               );
-              final plusSize = (25.0 * scale).clamp(14.0, 32.0);
-              final plusGap = (9.0 * scale).clamp(1.0, 18.0);
 
               return SingleChildScrollView(
                 // Scroll only when content is taller than screen
@@ -391,8 +406,8 @@ class LoveCompatInfoPage extends StatelessWidget {
                       padding: EdgeInsets.only(
                         top: fixedTopOffset,
                         bottom: (24.0 * scale).clamp(16.0, 40.0),
-                        //left: (18.0 * scale).clamp(14.0, 26.0),
-                        //right: (18.0 * scale).clamp(14.0, 26.0),
+                        left: horizontalPadding,
+                        right: horizontalPadding,
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -404,36 +419,44 @@ class LoveCompatInfoPage extends StatelessWidget {
                               // ===== Images Row =====
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   // Your Sign
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Image.asset(
-                                        _signAssetPath(yourSign),
-                                        width: signImageSize,
-                                        height: signImageSize,
-                                        fit: BoxFit.contain,
-                                      ),
-                                      SizedBox(
-                                        height: (8.0 * scale).clamp(6.0, 12.0),
-                                      ),
-                                      Text(
-                                        'You',
-                                        style: TextStyle(
-                                          fontSize: (16.0 * scale).clamp(
+                                  SizedBox(
+                                    width:
+                                        signImageSize, // lock width so text can't widen the row
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Image.asset(
+                                          _signAssetPath(yourSign),
+                                          width: signImageSize,
+                                          height: signImageSize,
+                                          fit: BoxFit.contain,
+                                        ),
+                                        SizedBox(
+                                          height: (8.0 * scale).clamp(
+                                            6.0,
                                             12.0,
-                                            18.0,
-                                          ),
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white.withValues(
-                                            alpha: 0.9,
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        Text(
+                                          'You',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: (16.0 * scale).clamp(
+                                              12.0,
+                                              18.0,
+                                            ),
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.9,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
 
                                   SizedBox(width: plusGap),
@@ -453,32 +476,42 @@ class LoveCompatInfoPage extends StatelessWidget {
                                   SizedBox(width: plusGap),
 
                                   // Partner Sign
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Image.asset(
-                                        _signAssetPath(partnerSign),
-                                        width: signImageSize,
-                                        height: signImageSize,
-                                        fit: BoxFit.contain,
-                                      ),
-                                      SizedBox(
-                                        height: (8.0 * scale).clamp(6.0, 12.0),
-                                      ),
-                                      Text(
-                                        'Your Partner',
-                                        style: TextStyle(
-                                          fontSize: (16.0 * scale).clamp(
+                                  SizedBox(
+                                    width:
+                                        signImageSize, // lock width so "Your Partner" doesn't expand row
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Image.asset(
+                                          _signAssetPath(partnerSign),
+                                          width: signImageSize,
+                                          height: signImageSize,
+                                          fit: BoxFit.contain,
+                                        ),
+                                        SizedBox(
+                                          height: (8.0 * scale).clamp(
+                                            6.0,
                                             12.0,
-                                            18.0,
-                                          ),
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white.withValues(
-                                            alpha: 0.9,
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        Text(
+                                          'Your Partner',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: (16.0 * scale).clamp(
+                                              12.0,
+                                              18.0,
+                                            ),
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.9,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -487,7 +520,7 @@ class LoveCompatInfoPage extends StatelessWidget {
 
                           SizedBox(height: between),
 
-                          // ===== Info Card (grows downward) =====
+                          // ===== Info Card =====
                           LoveCompatInfoWidget(
                             yourSign: yourSign,
                             partnerSign: partnerSign,
