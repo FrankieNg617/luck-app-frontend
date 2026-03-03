@@ -29,7 +29,7 @@ class _MainShellState extends State<MainShell>
     Color.fromARGB(255, 29, 15, 59), // Home
     Colors.black, // Zodiac
     Colors.black, // Love Cal
-    Color(0xFF1C1C1C), // Profile
+    Color.fromARGB(255, 31, 12, 49), // Profile
   ];
 
   late final AnimationController _popCtrl;
