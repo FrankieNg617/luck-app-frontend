@@ -28,7 +28,7 @@ class _MainShellState extends State<MainShell>
   final List<Color> _navColors = const [
     Color.fromARGB(255, 29, 15, 59), // Home
     Colors.black, // Zodiac
-    Colors.black, // Love Cal
+    Color.fromARGB(255, 19, 17, 67), // Love Cal
     Color.fromARGB(255, 31, 12, 49), // Profile
   ];
 
