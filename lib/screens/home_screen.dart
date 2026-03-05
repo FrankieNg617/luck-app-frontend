@@ -7,6 +7,7 @@ import '../widgets/dos_donts_widget.dart';
 import '../widgets/daily_tasks_widget.dart';
 import '../widgets/header_widget.dart';
 import '../background/home_background.dart';
+import '../user/profile_scope.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -56,6 +57,9 @@ class HomeScreenState extends State<HomeScreen> {
     final colour = "Gold";
     final time = "8AM-10AM";
 
+    final store = ProfileScope.of(context);
+    final p = store.profile;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: HomeBackground(
@@ -70,7 +74,7 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
                 children: [
                   if (showUI) ...[
-                    const HeaderWidget(username: "Frankie", zodiac: "Scorpio",),
+                    HeaderWidget(username: p.username, zodiac: p.zodiacSign,),
                     const SizedBox(height: 18),
 
                     Row(

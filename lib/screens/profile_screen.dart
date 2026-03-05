@@ -1,23 +1,9 @@
 import 'package:flutter/material.dart';
 import '../background/profile_background.dart';
+import '../user/profile_scope.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({
-    super.key,
-    // required this.username,
-    // required this.zodiacSign,
-    // required this.birthday,
-    // required this.birthPlace,
-    // required this.gender,
-    this.avatarAsset = 'assets/avatars/avatar.png',
-  });
-
-  final String username = 'Frankie';
-  final String zodiacSign = 'Scorpio';
-  final String birthday = '03 Nov 2001';
-  final String birthPlace = 'Hong Kong';
-  final String gender = 'Male';
-  final String avatarAsset;
+  const ProfileScreen({super.key,});
 
   String _planetForSign(String sign) {
     final s = sign.trim().toLowerCase();
@@ -40,16 +26,19 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final store = ProfileScope.of(context);
+    final p = store.profile;
+
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 
-    final planet = _planetForSign(zodiacSign);
+    final planet = _planetForSign(p.zodiacSign);
     final avatarSize = (w * 0.24).clamp(84.0, 130.0);
-    final planetBox = (w * 0.65).clamp(220.0, 360.0);
-    final planetSize = (planetBox * 0.62).clamp(140.0, 240.0);
+    final planetBox = (w * 0.67).clamp(220.0, 360.0);
+    final planetSize = (planetBox * 0.60).clamp(140.0, 240.0);
 
     final zodiacSymbolPath =
-        'assets/zodiac_symbols/${zodiacSign.trim().toLowerCase()}.png';
+        'assets/zodiac_symbols/${p.zodiacSign.trim().toLowerCase()}.png';
     final planetPath = 'assets/planets/${planet.toLowerCase()}.png';
 
     return Scaffold(
@@ -89,35 +78,23 @@ class ProfileScreen extends StatelessWidget {
                         ],
                       ),
                       child: ClipOval(
-                        child: Image.asset(avatarAsset, fit: BoxFit.cover),
+                        child: Image.asset(p.avatarAsset, fit: BoxFit.cover),
                       ),
                     ),
 
                     const SizedBox(height: 12),
 
-                    Text(
-                      username,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: (w * 0.055).clamp(18.0, 24.0),
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Zodiac sign + symbol
+                    // Username + zodiac symbol
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          zodiacSign,
+                          p.username,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            fontSize: (w * 0.045).clamp(15.0, 20.0),
-                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            fontSize: (w * 0.055).clamp(18.0, 24.0),
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.2,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -132,6 +109,19 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Zodiac sign + planet label
+                    Text(
+                      '${p.zodiacSign} - ${_titleCase(planet)}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontSize: (w * 0.045).clamp(15.0, 20.0),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
 
                     const SizedBox(height: 86),
@@ -164,17 +154,17 @@ class ProfileScreen extends StatelessWidget {
                             right: 0,
                             child: _InfoBadge(
                               icon: Icons.cake_rounded,
-                              label: birthday,
+                              label: p.birthday,
                             ),
                           ),
 
-                          // RIGHT (planet)
+                          // RIGHT (birth time)
                           Positioned(
                             right: 0,
                             top: planetBox * 0.40,
                             child: _InfoBadge(
-                              icon: Icons.brightness_3_rounded,
-                              label: _titleCase(planet),
+                              icon: Icons.access_time_rounded,
+                              label: p.birthTime,
                             ),
                           ),
 
@@ -183,8 +173,10 @@ class ProfileScreen extends StatelessWidget {
                             left: 0,
                             top: planetBox * 0.40,
                             child: _InfoBadge(
-                              icon: Icons.wc_rounded,
-                              label: gender,
+                              icon: p.gender.toLowerCase() == 'male'
+                                  ? Icons.male
+                                  : Icons.female,
+                              label: p.gender,
                             ),
                           ),
 
@@ -195,7 +187,7 @@ class ProfileScreen extends StatelessWidget {
                             right: 0,
                             child: _InfoBadge(
                               icon: Icons.place_rounded,
-                              label: birthPlace,
+                              label: p.birthPlace,
                             ),
                           ),
                         ],
@@ -239,14 +231,14 @@ class _InfoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final iconSize = (w * 0.055).clamp(16.0, 22.0);
-    final fontSize = (w * 0.032).clamp(11.0, 14.0);
+    final iconSize = (w * 0.070).clamp(16.0, 32.0);
+    final fontSize = (w * 0.035).clamp(11.0, 14.0);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: iconSize, color: Colors.white.withValues(alpha: 0.9)),
-        const SizedBox(height: 4),
+        const SizedBox(height: 7),
         Text(
           label,
           textAlign: TextAlign.center,
