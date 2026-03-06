@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:luck_app/controllers/iris_controller.dart';
 import 'package:luck_app/main_shell.dart';
 import '../background/ready_background.dart';
-import 'home_screen.dart';
 import '../background/home_background.dart';
 
 class ReadyScreen extends StatefulWidget {

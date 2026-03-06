@@ -58,7 +58,7 @@ class UserProfileStore extends ChangeNotifier {
   UserProfile _profile;
   UserProfile get profile => _profile;
 
-  void update(UserProfile next) {
+  Future<void> update(UserProfile next) async {
     _profile = next;
     notifyListeners();
   }

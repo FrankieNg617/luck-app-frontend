@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../user/profile_scope.dart';
 
 class ReadyBackground extends StatefulWidget {
   final Widget? child;
@@ -71,6 +72,9 @@ class _ReadyBackgroundState extends State<ReadyBackground>
     final size = MediaQuery.of(context).size;
     final bottomPadding = (size.height * 0.08).clamp(28.0, 56.0);
 
+    final store = ProfileScope.of(context);
+    final p = store.profile;
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -138,8 +142,8 @@ class _ReadyBackgroundState extends State<ReadyBackground>
                 return AnimatedOpacity(
                   duration: const Duration(milliseconds: 220),
                   opacity: hidden ? 0.0 : 1.0,
-                  child: const TypingHintText(
-                    username: 'Frankie',
+                  child: TypingHintText(
+                    username: p.username,
                   ),
                 );
               },
