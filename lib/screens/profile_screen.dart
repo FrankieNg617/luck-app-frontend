@@ -58,7 +58,7 @@ class ProfileScreen extends StatelessWidget {
           // Threads-like: slight shrink + rounded corners + tiny downward shift
           final scale = 1.0 - (0.09 * curved); // 1.00 -> 0.94
           final radius = 15.0 * curved; // 0 -> 28
-          final dy = 14.0 * curved;
+          final dy = 35.0 * curved;
 
           return Transform.translate(
             offset: Offset(0, dy),
@@ -67,7 +67,7 @@ class ProfileScreen extends StatelessWidget {
               alignment: Alignment.topCenter,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(radius),
-                child: child,
+                child: child
               ),
             ),
           );

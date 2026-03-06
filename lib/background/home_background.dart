@@ -51,7 +51,7 @@ class _HomeBackgroundState extends State<HomeBackground>
       children: [
         // ================= BACKGROUND IMAGE =================
         Image.asset(
-          'assets/backgrounds/test2.png',
+          'assets/backgrounds/home_background.png',
           fit: BoxFit.cover,
           alignment: Alignment.center,
         ),

@@ -7,7 +7,7 @@ class ThreadsSheetRoute<T> extends PageRouteBuilder<T> {
           opaque: false,
           barrierDismissible: true,
           barrierColor: Colors.black.withValues(alpha: 0.32),
-          transitionDuration: const Duration(milliseconds: 620),
+          transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 520),
           pageBuilder: (context, animation, secondaryAnimation) {
             return builder(context);
