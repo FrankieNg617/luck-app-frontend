@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/username_edit_widget.dart';
 import '../widgets/gender_edit_widget.dart';
+import '../widgets/birthday_edit_widget.dart';
 
 class InfoEditScreen extends StatefulWidget {
   const InfoEditScreen({
@@ -45,6 +46,11 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
         );
       case 'gender':
         return GenderEditWidget(
+          initialValue: widget.value,
+          onChanged: _onFieldChanged,
+        );
+      case 'birthday':
+        return BirthdayEditWidget(
           initialValue: widget.value,
           onChanged: _onFieldChanged,
         );

@@ -43,7 +43,7 @@ class UserProfile {
   static const dev = UserProfile(
     username: 'Frankie',
     zodiacSign: 'Scorpio',
-    birthday: '03 Nov 2001',
+    birthday: '03 November 2001',
     birthTime: '14:25',
     birthPlace: 'Hong Kong',
     gender: 'Male',

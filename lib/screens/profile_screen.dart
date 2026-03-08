@@ -3,6 +3,7 @@ import '../background/profile_background.dart';
 import '../user/profile_scope.dart';
 import '../routes/threads_sheet_route.dart';
 import 'profile_edit_screen.dart';
+import '../utils/date_format.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -234,7 +235,7 @@ class ProfileScreen extends StatelessWidget {
                               right: 0,
                               child: _InfoBadge(
                                 icon: Icons.cake_rounded,
-                                label: p.birthday,
+                                label: formatBirthdayShort(p.birthday),
                               ),
                             ),
 

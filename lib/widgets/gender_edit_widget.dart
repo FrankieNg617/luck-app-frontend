@@ -176,10 +176,10 @@ class _GenderEditWidgetState extends State<GenderEditWidget>
             ),
           ),
 
-          SizedBox(height: (h * 0.01).clamp(8.0, 12.0)),
+          SizedBox(height: (h * 0.018).clamp(8.0, 12.0)),
 
           Text(
-            'Select your gender',
+            'Select your gender identity',
             style: TextStyle(
               fontSize: (w * 0.032).clamp(12.0, 14.0),
               fontWeight: FontWeight.w500,
