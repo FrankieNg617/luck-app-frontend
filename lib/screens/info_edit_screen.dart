@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/username_edit_widget.dart';
+import '../widgets/gender_edit_widget.dart';
 
 class InfoEditScreen extends StatefulWidget {
   const InfoEditScreen({
@@ -25,7 +26,7 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
     _editedValue = widget.value;
   }
 
-  void _onUsernameChanged({
+  void _onFieldChanged({
     required String value,
     required bool isValid,
   }) {
@@ -40,7 +41,12 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
       case 'name':
         return UsernameEditWidget(
           initialValue: widget.value,
-          onChanged: _onUsernameChanged,
+          onChanged: _onFieldChanged,
+        );
+      case 'gender':
+        return GenderEditWidget(
+          initialValue: widget.value,
+          onChanged: _onFieldChanged,
         );
 
       default:

@@ -158,7 +158,7 @@ class ProfileScreen extends StatelessWidget {
                       // Edit profile button
                       SizedBox(
                         width: (w * 0.35).clamp(180.0, 240.0),
-                        height: 33,
+                        height: h * 0.035,
                         child: OutlinedButton(
                           style: ButtonStyle(
                             backgroundColor: WidgetStateProperty.all(
