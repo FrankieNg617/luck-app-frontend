@@ -288,7 +288,7 @@ class _BirthdayEditWidgetState extends State<BirthdayEditWidget> {
               horizontal: (w * 0.04).clamp(10.0, 18.0),
             ),
             child: Text(
-              'Date determines your zodiac sign and daily \nluck calculation',
+              'Date determines your zodiac sign',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: (w * 0.033).clamp(12.0, 14.0),
