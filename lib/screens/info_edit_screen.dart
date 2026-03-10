@@ -3,6 +3,7 @@ import '../widgets/username_edit_widget.dart';
 import '../widgets/gender_edit_widget.dart';
 import '../widgets/birthday_edit_widget.dart';
 import '../widgets/birth_time_edit_widget.dart';
+import '../widgets/birth_place_edit_widget.dart';
 
 class InfoEditScreen extends StatefulWidget {
   const InfoEditScreen({
@@ -57,6 +58,11 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
         );
       case 'birth time':
         return BirthTimeEditWidget(
+          initialValue: widget.value,
+          onChanged: _onFieldChanged,
+        );
+      case 'birth place':
+        return BirthPlaceEditWidget(
           initialValue: widget.value,
           onChanged: _onFieldChanged,
         );
