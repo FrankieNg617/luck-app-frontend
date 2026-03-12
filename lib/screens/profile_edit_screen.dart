@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:image_compress_plus/image_compress_plus.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -289,11 +289,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         return;
       }
 
-      final File? processed = await _compressAvatarTo512(cropped.path);
+      final File? compressed = await _compressAvatarTo512(cropped.path);
 
       if (!mounted) return;
 
-      if (processed == null) {
+      if (compressed == null) {
         setState(() {
           _isPickingAvatar = false;
         });
@@ -302,10 +302,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       }
 
       setState(() {
-        _selectedAvatarFile = processed;
+        _selectedAvatarFile = compressed;
+        _editedProfile = _editedProfile?.copyWith(avatarPath: compressed.path);
         _isPickingAvatar = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -322,13 +323,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
       uiSettings: [
         AndroidUiSettings(
-          toolbarTitle: 'Crop photo',
+          toolbarTitle: '',
+          toolbarColor: Colors.black,
+          toolbarWidgetColor: Colors.white,
           lockAspectRatio: true,
-          hideBottomControls: false,
+          hideBottomControls: true,
           initAspectRatio: CropAspectRatioPreset.square,
         ),
         IOSUiSettings(
-          title: 'Crop photo',
+          title: '',
           aspectRatioLockEnabled: true,
           resetAspectRatioEnabled: false,
           rotateButtonsHidden: false,
@@ -342,22 +345,24 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     final targetPath =
         '${Directory.systemTemp.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-    final File? result = await FlutterImageCompress.compressAndGetFile(
+    final XFile? result = await ImageCompressPlus.compressAndGetFile(
       sourcePath,
       targetPath,
-      format: CompressFormat.jpeg,
       quality: 86,
       minWidth: 512,
       minHeight: 512,
+      format: CompressFormat.jpeg,
       keepExif: false,
     );
 
-    return result;
+    if (result == null) return null;
+    return File(result.path);
   }
 
   void _removeCurrentPicture() {
     setState(() {
       _selectedAvatarFile = null;
+      _editedProfile = _editedProfile?.copyWith(clearAvatarPath: true);
     });
   }
 
@@ -412,9 +417,23 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
     final w = MediaQuery.of(context).size.width;
 
-    final ImageProvider avatarProvider = _selectedAvatarFile != null
-        ? FileImage(_selectedAvatarFile!)
-        : AssetImage(p.avatarAsset);
+    ImageProvider _buildAvatarProvider(UserProfile p) {
+      if (_selectedAvatarFile != null) {
+        return FileImage(_selectedAvatarFile!);
+      }
+
+      final avatarPath = p.avatarPath;
+      if (avatarPath != null && avatarPath.isNotEmpty) {
+        final file = File(avatarPath);
+        if (file.existsSync()) {
+          return FileImage(file);
+        }
+      }
+
+      return AssetImage(p.avatarAsset);
+    }
+
+    final avatarProvider = _buildAvatarProvider(p);
 
     return AnimatedBuilder(
       animation: anim,

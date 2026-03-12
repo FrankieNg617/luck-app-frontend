@@ -9,6 +9,7 @@ class UserProfile {
   final String birthPlace; // "Hong Kong"
   final String gender;     // "Male" / "Female"
   final String avatarAsset;
+  final String? avatarPath;
 
   const UserProfile({
     required this.username,
@@ -18,6 +19,7 @@ class UserProfile {
     required this.birthPlace,
     required this.gender,
     required this.avatarAsset,
+    this.avatarPath,
   });
 
   UserProfile copyWith({
@@ -28,6 +30,8 @@ class UserProfile {
     String? birthPlace,
     String? gender,
     String? avatarAsset,
+    String? avatarPath,
+    bool clearAvatarPath = false,
   }) {
     return UserProfile(
       username: username ?? this.username,
@@ -37,6 +41,7 @@ class UserProfile {
       birthPlace: birthPlace ?? this.birthPlace,
       gender: gender ?? this.gender,
       avatarAsset: avatarAsset ?? this.avatarAsset,
+      avatarPath: clearAvatarPath ? null : (avatarPath ?? avatarPath),
     );
   }
 

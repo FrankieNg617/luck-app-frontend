@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../background/profile_background.dart';
 import '../user/profile_scope.dart';
@@ -27,6 +28,19 @@ class ProfileScreen extends StatelessWidget {
     return map[s] ?? 'sun';
   }
 
+  ImageProvider _buildAvatarProvider(dynamic p) {
+    final avatarPath = p.avatarPath;
+
+    if (avatarPath != null && avatarPath.isNotEmpty) {
+      final file = File(avatarPath);
+      if (file.existsSync()) {
+        return FileImage(file);
+      }
+    }
+
+    return AssetImage(p.avatarAsset);
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = ProfileScope.of(context);
@@ -46,6 +60,8 @@ class ProfileScreen extends StatelessWidget {
     final zodiacSymbolPath =
         'assets/zodiac_symbols/${p.zodiacSign.trim().toLowerCase()}.png';
     final planetPath = 'assets/planets/${planet.toLowerCase()}.png';
+
+    final avatarProvider = _buildAvatarProvider(p);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -108,7 +124,7 @@ class ProfileScreen extends StatelessWidget {
                           ],
                         ),
                         child: ClipOval(
-                          child: Image.asset(p.avatarAsset, fit: BoxFit.cover),
+                          child: Image(image: avatarProvider, fit: BoxFit.cover),
                         ),
                       ),
 
