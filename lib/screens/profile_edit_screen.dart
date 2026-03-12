@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import '../user/profile_scope.dart';
+import 'dart:io';
 import '../user/user_profile.dart';
 import '../widgets/profile_edit_section.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -14,6 +20,16 @@ class ProfileEditScreen extends StatefulWidget {
 class _ProfileEditScreenState extends State<ProfileEditScreen> {
   UserProfile? _editedProfile;
   bool _isSaving = false;
+  bool _isPickingAvatar = false;
+
+  final ImagePicker _picker = ImagePicker();
+  File? _selectedAvatarFile;
+
+  @override
+  void initState() {
+    super.initState();
+    _recoverLostAvatarPick();
+  }
 
   void _handleValueChanged(String title, String newValue) {
     if (_editedProfile == null) return;
@@ -27,7 +43,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           _editedProfile = _editedProfile!.copyWith(gender: newValue);
           break;
         case 'Birthday':
-          _editedProfile = _editedProfile!.copyWith(birthday: newValue);
+          final zodiac = _getZodiacSign(newValue);
+          _editedProfile = _editedProfile!.copyWith(
+            birthday: newValue,
+            zodiacSign: zodiac,
+          );
           break;
         case 'Birth time':
           _editedProfile = _editedProfile!.copyWith(birthTime: newValue);
@@ -39,35 +59,347 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     });
   }
 
+  String _getZodiacSign(String birthday) {
+    try {
+      final date = DateFormat('dd MMMM yyyy').parse(birthday);
+
+      final day = date.day;
+      final month = date.month;
+
+      if ((month == 3 && day >= 21) || (month == 4 && day <= 20)) {
+        return 'Aries';
+      } else if ((month == 4 && day >= 21) || (month == 5 && day <= 19)) {
+        return 'Taurus';
+      } else if ((month == 5 && day >= 20) || (month == 6 && day <= 21)) {
+        return 'Gemini';
+      } else if ((month == 6 && day >= 22) || (month == 7 && day <= 22)) {
+        return 'Cancer';
+      } else if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) {
+        return 'Leo';
+      } else if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) {
+        return 'Virgo';
+      } else if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) {
+        return 'Libra';
+      } else if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) {
+        return 'Scorpio';
+      } else if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) {
+        return 'Sagittarius';
+      } else if ((month == 12 && day >= 22) || (month == 1 && day <= 19)) {
+        return 'Capricorn';
+      } else if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) {
+        return 'Aquarius';
+      } else {
+        return 'Pisces';
+      }
+    } catch (_) {
+      return _editedProfile?.zodiacSign ?? '';
+    }
+  }
+
+  Future<void> _recoverLostAvatarPick() async {
+    try {
+      final response = await _picker.retrieveLostData();
+      if (response.isEmpty) return;
+
+      final file = response.file;
+      if (file == null) {
+        if (response.exception != null && mounted) {
+          _showError('Could not restore the selected photo.');
+        }
+        return;
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _selectedAvatarFile = File(file.path);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      _showError('Could not restore the selected photo.');
+    }
+  }
+
   Future<void> _saveProfile() async {
-  if (_isSaving || _editedProfile == null) return;
+    if (_isSaving || _editedProfile == null) return;
 
-  final store = ProfileScope.of(context);
-
-  setState(() {
-    _isSaving = true;
-  });
-
-  try {
-    await Future.wait([
-      store.update(_editedProfile!), // actual save
-      Future.delayed(const Duration(seconds: 2)), // minimum loading time
-    ]);
-
-    if (!mounted) return;
-    Navigator.of(context).pop();
-  } catch (_) {
-    if (!mounted) return;
+    final store = ProfileScope.of(context);
 
     setState(() {
-      _isSaving = false;
+      _isSaving = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Failed to save profile')),
+    try {
+      await Future.wait([
+        store.update(_editedProfile!), // actual save
+        Future.delayed(const Duration(seconds: 2)), // minimum loading time
+      ]);
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSaving = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to save profile')));
+    }
+  }
+
+  void _showAvatarActionSheet() {
+    if (_isPickingAvatar) return;
+
+    final w = MediaQuery.of(context).size.width;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: false,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          bottom: false,
+          child: Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(w * 0.06, 10, w * 0.06, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Edit profile picture',
+                    style: TextStyle(
+                      fontSize: (w * 0.045).clamp(17.0, 20.0),
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Divider(
+                    height: 1,
+                    thickness: 0.7,
+                    color: Colors.black.withValues(alpha: 0.08),
+                  ),
+                  _BottomSheetActionRow(
+                    icon: Icons.image_outlined,
+                    label: 'Choose from library',
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _chooseFromLibrary();
+                    },
+                  ),
+                  _BottomSheetActionRow(
+                    icon: Icons.photo_camera_outlined,
+                    label: 'Take photo',
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _takePhoto();
+                    },
+                  ),
+                  _BottomSheetActionRow(
+                    icon: Icons.delete_outline,
+                    label: 'Remove current picture',
+                    isDestructive: true,
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _removeCurrentPicture();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
-}
+
+  Future<void> _chooseFromLibrary() async {
+    await _pickAndProcessAvatar(ImageSource.gallery);
+  }
+
+  Future<void> _takePhoto() async {
+    final permission = await Permission.camera.request();
+
+    if (permission.isDenied) {
+      _showError('Camera access was denied.');
+      return;
+    }
+
+    if (permission.isPermanentlyDenied || permission.isRestricted) {
+      _showOpenSettingsDialog(
+        title: 'Camera access needed',
+        message:
+            'Please allow camera access in Settings to take a profile picture.',
+      );
+      return;
+    }
+
+    await _pickAndProcessAvatar(ImageSource.camera);
+  }
+
+  Future<void> _pickAndProcessAvatar(ImageSource source) async {
+    if (_isPickingAvatar) return;
+
+    setState(() {
+      _isPickingAvatar = true;
+    });
+
+    try {
+      final XFile? picked = await _picker.pickImage(
+        source: source,
+        imageQuality: 100,
+        preferredCameraDevice: CameraDevice.front,
+      );
+
+      if (!mounted) return;
+
+      if (picked == null) {
+        setState(() {
+          _isPickingAvatar = false;
+        });
+        return;
+      }
+
+      final CroppedFile? cropped = await _cropAvatarToSquare(picked.path);
+
+      if (!mounted) return;
+
+      if (cropped == null) {
+        setState(() {
+          _isPickingAvatar = false;
+        });
+        return;
+      }
+
+      final File? processed = await _compressAvatarTo512(cropped.path);
+
+      if (!mounted) return;
+
+      if (processed == null) {
+        setState(() {
+          _isPickingAvatar = false;
+        });
+        _showError('Could not process the selected photo.');
+        return;
+      }
+
+      setState(() {
+        _selectedAvatarFile = processed;
+        _isPickingAvatar = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isPickingAvatar = false;
+      });
+
+      _showError('Could not update your profile picture.');
+    }
+  }
+
+  Future<CroppedFile?> _cropAvatarToSquare(String sourcePath) async {
+    return ImageCropper().cropImage(
+      sourcePath: sourcePath,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop photo',
+          lockAspectRatio: true,
+          hideBottomControls: false,
+          initAspectRatio: CropAspectRatioPreset.square,
+        ),
+        IOSUiSettings(
+          title: 'Crop photo',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+          rotateButtonsHidden: false,
+          rotateClockwiseButtonHidden: false,
+        ),
+      ],
+    );
+  }
+
+  Future<File?> _compressAvatarTo512(String sourcePath) async {
+    final targetPath =
+        '${Directory.systemTemp.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+    final File? result = await FlutterImageCompress.compressAndGetFile(
+      sourcePath,
+      targetPath,
+      format: CompressFormat.jpeg,
+      quality: 86,
+      minWidth: 512,
+      minHeight: 512,
+      keepExif: false,
+    );
+
+    return result;
+  }
+
+  void _removeCurrentPicture() {
+    setState(() {
+      _selectedAvatarFile = null;
+    });
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _showOpenSettingsDialog({
+    required String title,
+    required String message,
+  }) async {
+    if (!mounted) return;
+
+    await showCupertinoDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Text(title),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(message),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await openAppSettings();
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +411,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     final anim = route?.secondaryAnimation ?? kAlwaysDismissedAnimation;
 
     final w = MediaQuery.of(context).size.width;
+
+    final ImageProvider avatarProvider = _selectedAvatarFile != null
+        ? FileImage(_selectedAvatarFile!)
+        : AssetImage(p.avatarAsset);
 
     return AnimatedBuilder(
       animation: anim,
@@ -137,12 +473,18 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                       Colors.transparent,
                                     ),
                                     foregroundColor:
-                                        WidgetStateProperty.resolveWith((states) {
-                                      if (states.contains(WidgetState.pressed)) {
-                                        return Colors.black.withValues(alpha: 0.45);
-                                      }
-                                      return Colors.black;
-                                    }),
+                                        WidgetStateProperty.resolveWith((
+                                          states,
+                                        ) {
+                                          if (states.contains(
+                                            WidgetState.pressed,
+                                          )) {
+                                            return Colors.black.withValues(
+                                              alpha: 0.45,
+                                            );
+                                          }
+                                          return Colors.black;
+                                        }),
                                     textStyle: WidgetStateProperty.all(
                                       TextStyle(
                                         fontSize: (w * 0.042).clamp(15.0, 17.0),
@@ -170,12 +512,20 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                   width: (w * 0.16).clamp(54.0, 72.0),
                                   child: Center(
                                     child: AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 180),
+                                      duration: const Duration(
+                                        milliseconds: 180,
+                                      ),
                                       child: _isSaving
                                           ? SizedBox(
                                               key: const ValueKey('loading'),
-                                              width: (w * 0.055).clamp(16.0, 35.0),
-                                              height: (w * 0.055).clamp(16.0, 35.0),
+                                              width: (w * 0.055).clamp(
+                                                16.0,
+                                                35.0,
+                                              ),
+                                              height: (w * 0.055).clamp(
+                                                16.0,
+                                                35.0,
+                                              ),
                                               child: const CupertinoActivityIndicator(
                                                 //strokeWidth: 2.2,
                                                 // valueColor:
@@ -187,29 +537,33 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                           : TextButton(
                                               key: const ValueKey('done'),
                                               style: ButtonStyle(
-                                                overlayColor: WidgetStateProperty.all(
-                                                  Colors.transparent,
-                                                ),
+                                                overlayColor:
+                                                    WidgetStateProperty.all(
+                                                      Colors.transparent,
+                                                    ),
                                                 foregroundColor:
-                                                    WidgetStateProperty.resolveWith((
-                                                  states,
-                                                ) {
-                                                  if (states.contains(
-                                                    WidgetState.pressed,
-                                                  )) {
-                                                    return Colors.black.withValues(
-                                                      alpha: 0.45,
-                                                    );
-                                                  }
-                                                  return Colors.black;
-                                                }),
-                                                textStyle: WidgetStateProperty.all(
-                                                  TextStyle(
-                                                    fontSize:
-                                                        (w * 0.042).clamp(15.0, 17.0),
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
+                                                    WidgetStateProperty.resolveWith(
+                                                      (states) {
+                                                        if (states.contains(
+                                                          WidgetState.pressed,
+                                                        )) {
+                                                          return Colors.black
+                                                              .withValues(
+                                                                alpha: 0.45,
+                                                              );
+                                                        }
+                                                        return Colors.black;
+                                                      },
+                                                    ),
+                                                textStyle:
+                                                    WidgetStateProperty.all(
+                                                      TextStyle(
+                                                        fontSize: (w * 0.042)
+                                                            .clamp(15.0, 17.0),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
                                               ),
                                               onPressed: _saveProfile,
                                               child: const Text('Done'),
@@ -231,35 +585,40 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         const SizedBox(height: 40),
 
                         Center(
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              CircleAvatar(
-                                radius: (w * 0.12).clamp(40.0, 56.0),
-                                backgroundImage: AssetImage(p.avatarAsset),
-                              ),
-                              Positioned(
-                                bottom: w * 0.0001,
-                                right: w * 0.0001,
-                                child: Container(
-                                  width: w * 0.07,
-                                  height: w * 0.07,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.black.withValues(alpha: 0.08),
-                                      width: 1,
+                          child: GestureDetector(
+                            onTap: _showAvatarActionSheet,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                CircleAvatar(
+                                  radius: (w * 0.12).clamp(40.0, 56.0),
+                                  backgroundImage: avatarProvider,
+                                ),
+                                Positioned(
+                                  bottom: w * 0.0001,
+                                  right: w * 0.0001,
+                                  child: Container(
+                                    width: w * 0.07,
+                                    height: w * 0.07,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      Icons.camera_alt_rounded,
+                                      size: w * 0.040,
+                                      color: Colors.black87,
                                     ),
                                   ),
-                                  child: Icon(
-                                    Icons.camera_alt_rounded,
-                                    size: w * 0.040,
-                                    color: Colors.black87,
-                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
 
@@ -283,6 +642,49 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomSheetActionRow extends StatelessWidget {
+  const _BottomSheetActionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isDestructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive ? const Color(0xFFFF2D55) : Colors.black;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        child: Row(
+          children: [
+            Icon(icon, size: 32, color: color),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w400,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
