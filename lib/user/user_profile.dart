@@ -41,7 +41,7 @@ class UserProfile {
       birthPlace: birthPlace ?? this.birthPlace,
       gender: gender ?? this.gender,
       avatarAsset: avatarAsset ?? this.avatarAsset,
-      avatarPath: clearAvatarPath ? null : (avatarPath ?? avatarPath),
+      avatarPath: clearAvatarPath ? null : (avatarPath ?? this.avatarPath),
     );
   }
 
@@ -52,7 +52,7 @@ class UserProfile {
     birthTime: '14:25',
     birthPlace: 'Hong Kong',
     gender: 'Male',
-    avatarAsset: 'assets/avatars/avatar.png',
+    avatarAsset: 'assets/avatars/boy.png',
   );
 }
 

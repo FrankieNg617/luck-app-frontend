@@ -63,8 +63,8 @@ class _GenderEditWidgetState extends State<GenderEditWidget>
     super.dispose();
   }
 
-  Color _boxColor() => const Color(0xFFF4F4F4);
-  Color _innerColor() => const Color(0xFFE9E9E9);
+  Color _boxColor() => const Color.fromARGB(177, 190, 180, 180);
+  Color _innerColor() => const Color.fromARGB(255, 198, 189, 189);
 
   @override
   Widget build(BuildContext context) {

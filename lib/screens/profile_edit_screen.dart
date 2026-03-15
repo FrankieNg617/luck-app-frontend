@@ -40,7 +40,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           _editedProfile = _editedProfile!.copyWith(username: newValue);
           break;
         case 'Gender':
-          _editedProfile = _editedProfile!.copyWith(gender: newValue);
+          final defaultAvatar = newValue.toLowerCase() == 'male'
+              ? 'assets/avatars/boy.png'
+              : 'assets/avatars/woman.png';
+
+          _editedProfile = _editedProfile!.copyWith(
+            gender: newValue,
+            avatarAsset: defaultAvatar,
+          );
           break;
         case 'Birthday':
           final zodiac = _getZodiacSign(newValue);

@@ -110,6 +110,7 @@ class ProfileScreen extends StatelessWidget {
                         width: avatarSize,
                         height: avatarSize,
                         decoration: BoxDecoration(
+                          color: Colors.white70,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.18),
