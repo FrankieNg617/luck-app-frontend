@@ -344,6 +344,9 @@ class LoveCompatInfoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    double w(double value) => screenWidth * value;
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.transparent,
@@ -356,7 +359,10 @@ class LoveCompatInfoPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white70),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: w(0.05).clamp(20.0, 24.0)),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
 
       body: ZodiacInfoBackground(

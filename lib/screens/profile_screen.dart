@@ -5,6 +5,7 @@ import '../user/profile_scope.dart';
 import '../routes/threads_sheet_route.dart';
 import 'profile_edit_screen.dart';
 import '../utils/date_format.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -350,26 +351,6 @@ class _InfoBadge extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B0B10),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Settings'),
-      ),
-      body: const Center(
-        child: Text('Empty for now', style: TextStyle(color: Colors.white70)),
-      ),
     );
   }
 }
