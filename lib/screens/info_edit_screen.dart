@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/username_edit_widget.dart';
-import '../widgets/gender_edit_widget.dart';
-import '../widgets/birthday_edit_widget.dart';
-import '../widgets/birth_time_edit_widget.dart';
-import '../widgets/birth_place_edit_widget.dart';
+import '../widgets/Profile/username_edit_widget.dart';
+import '../widgets/Profile/gender_edit_widget.dart';
+import '../widgets/Profile/birthday_edit_widget.dart';
+import '../widgets/Profile/birth_time_edit_widget.dart';
+import '../widgets/Profile/birth_place_edit_widget.dart';
 
 class InfoEditScreen extends StatefulWidget {
   const InfoEditScreen({

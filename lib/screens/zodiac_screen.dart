@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../background/zodiac_info_background.dart';
 import '../background/zodiac_background.dart';
-import '../widgets/zodiac_info_widget.dart';
+import '../widgets/Zodiac/zodiac_info_widget.dart';
 
 class ZodiacScreen extends StatelessWidget {
   const ZodiacScreen({super.key});

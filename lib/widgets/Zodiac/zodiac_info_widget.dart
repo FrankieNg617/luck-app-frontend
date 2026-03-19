@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../popup/zodiac_popup.dart';
-import '../data/zodiac_stage_data.dart';
-import '../data/zodiac_relationship_data.dart';
-import '../data/zodiac_relationship_detail.dart';
+import '../../popup/zodiac_popup.dart';
+import '../../data/zodiac_stage_data.dart';
+import '../../data/zodiac_relationship_data.dart';
+import '../../data/zodiac_relationship_detail.dart';
 
 class ZodiacInfoWidget extends StatelessWidget {
   const ZodiacInfoWidget({super.key, required this.sign});

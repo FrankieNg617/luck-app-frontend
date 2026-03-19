@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'settings_info_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  void _open(BuildContext context, String title) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => SettingsInfoScreen(title: title)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
           'Settings',
           style: TextStyle(
             color: Colors.black,
-            fontSize: w(0.050).clamp(18.0, 22.0),
+            fontSize: w(0.048).clamp(18.0, 22.0),
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -66,7 +74,7 @@ class SettingsScreen extends StatelessWidget {
                         _settingsItem(
                           icon: Icons.notifications_none,
                           title: 'Notifications',
-                          onTap: () {},
+                          onTap: () => _open(context, 'Notifications'),
                           horizontalPadding: horizontalPadding,
                           verticalPadding: itemVerticalPadding,
                           iconBoxWidth: iconBoxWidth,
@@ -77,7 +85,7 @@ class SettingsScreen extends StatelessWidget {
                         _settingsItem(
                           icon: Icons.person_outline,
                           title: 'Account',
-                          onTap: () {},
+                          onTap: () => _open(context, 'Account'),
                           horizontalPadding: horizontalPadding,
                           verticalPadding: itemVerticalPadding,
                           iconBoxWidth: iconBoxWidth,
@@ -88,7 +96,7 @@ class SettingsScreen extends StatelessWidget {
                         _settingsItem(
                           icon: Icons.workspace_premium_outlined,
                           title: 'Subscriptions',
-                          onTap: () {},
+                          onTap: () => _open(context, 'Subscriptions'),
                           horizontalPadding: horizontalPadding,
                           verticalPadding: itemVerticalPadding,
                           iconBoxWidth: iconBoxWidth,
@@ -121,7 +129,7 @@ class SettingsScreen extends StatelessWidget {
                         _settingsItem(
                           icon: Icons.info_outline,
                           title: 'About',
-                          onTap: () {},
+                          onTap: () => _open(context, 'About'),
                           horizontalPadding: horizontalPadding,
                           verticalPadding: itemVerticalPadding,
                           iconBoxWidth: iconBoxWidth,

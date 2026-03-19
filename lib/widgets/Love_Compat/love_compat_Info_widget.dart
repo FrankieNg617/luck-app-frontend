@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../data/love_compat_data.dart';
+import '../../data/love_compat_data.dart';
 
 class LoveCompatInfoWidget extends StatefulWidget {
   const LoveCompatInfoWidget({

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../user/user_profile.dart';
-import '../routes/threads_sheet_route.dart';
-import '../screens/info_edit_screen.dart';
-import '../utils/date_format.dart';
+import '../../user/user_profile.dart';
+import '../../routes/threads_sheet_route.dart';
+import '../../screens/info_edit_screen.dart';
+import '../../utils/date_format.dart';
 
 class ProfileEditSection extends StatelessWidget {
   const ProfileEditSection({

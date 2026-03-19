@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../ui/fortune_style.dart';
+import '../../ui/fortune_style.dart';
 
 class DailyTasksWidget extends StatefulWidget {
   final List<String> initialTasks;

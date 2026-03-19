@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../background/love_calculator_background.dart';
-import '../widgets/zodiac_selector.dart';
+import '../widgets/Love_Compat/zodiac_selector.dart';
 import '../background/zodiac_info_background.dart';
-import '../widgets/love_compat_info_widget.dart';
+import '../widgets/Love_Compat/love_compat_info_widget.dart';
 
 class LoveCalculatorScreen extends StatefulWidget {
   const LoveCalculatorScreen({super.key});

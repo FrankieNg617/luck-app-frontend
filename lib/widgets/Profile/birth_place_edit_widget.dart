@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../config/google_api.dart';
+import '../../config/google_api.dart';
 
 class BirthPlaceEditWidget extends StatefulWidget {
   const BirthPlaceEditWidget({

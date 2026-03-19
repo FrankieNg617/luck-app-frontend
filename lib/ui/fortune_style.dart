@@ -113,8 +113,8 @@ class FortuneTheme {
         headlineSmall: GoogleFonts.playfairDisplay(textStyle: base.textTheme.headlineSmall),
         headlineMedium: GoogleFonts.playfairDisplay(textStyle: base.textTheme.headlineMedium),
         headlineLarge: GoogleFonts.playfairDisplay(textStyle: base.textTheme.headlineLarge),
-        titleLarge: GoogleFonts.playfairDisplay(textStyle: base.textTheme.titleLarge),
-        titleMedium: GoogleFonts.playfairDisplay(textStyle: base.textTheme.titleMedium),
+        //titleLarge: GoogleFonts.playfairDisplay(textStyle: base.textTheme.titleLarge),
+        //titleMedium: GoogleFonts.playfairDisplay(textStyle: base.textTheme.titleMedium),
       ),
     );
   }

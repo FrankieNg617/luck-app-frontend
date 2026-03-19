@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../ui/fortune_style.dart';
+import '../../ui/fortune_style.dart';
 
 class DosDontsWidget extends StatefulWidget {
   final List<String> dos;

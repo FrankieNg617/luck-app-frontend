@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../user/profile_scope.dart';
 import 'dart:io';
 import '../user/user_profile.dart';
-import '../widgets/profile_edit_section.dart';
+import '../widgets/Profile/profile_edit_section.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';

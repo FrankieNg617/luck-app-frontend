@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../widgets/overall_score_widget.dart';
-import '../widgets/aspect_bars_widget.dart';
-import '../widgets/life_advice_widget.dart';
-import '../widgets/lucky_items_widget.dart';
-import '../widgets/dos_donts_widget.dart';
-import '../widgets/daily_tasks_widget.dart';
-import '../widgets/header_widget.dart';
+import '../widgets/Luck_Score/overall_score_widget.dart';
+import '../widgets/Luck_Score/aspect_bars_widget.dart';
+import '../widgets/Luck_Score/life_advice_widget.dart';
+import '../widgets/Luck_Score/lucky_items_widget.dart';
+import '../widgets/Luck_Score/dos_donts_widget.dart';
+import '../widgets/Luck_Score/daily_tasks_widget.dart';
+import '../widgets/Luck_Score/header_widget.dart';
 import '../background/home_background.dart';
 import '../user/profile_scope.dart';
 
