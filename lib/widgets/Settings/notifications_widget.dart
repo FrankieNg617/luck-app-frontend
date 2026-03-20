@@ -1,66 +1,115 @@
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:luck_app/popup/notifications_popup.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationsContent extends StatefulWidget {
   const NotificationsContent({super.key});
 
   @override
-  State<NotificationsContent> createState() =>
-      _NotificationsContentState();
+  State<NotificationsContent> createState() => _NotificationsContentState();
 }
 
 class _NotificationsContentState extends State<NotificationsContent> {
+  static const _onlineKey = 'settings_online_remind';
+  static const _dailyTasksKey = 'settings_daily_tasks_remind';
+
   bool online = true;
   bool daily = true;
-  bool _checkedPermission = false;
+  bool _hasRequestedOnOpen  = false;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    if (!_checkedPermission) {
-      _checkedPermission = true;
+    if (!_hasRequestedOnOpen ) {
+      _hasRequestedOnOpen  = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _checkAndShowPermissionDialog();
+        _requestNotificationPermissionOnOpen();
       });
     }
   }
 
-  Future<void> _checkAndShowPermissionDialog() async {
-    final status = await Permission.notification.status;
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedOnline = prefs.getBool(_onlineKey);
+    final savedDaily = prefs.getBool(_dailyTasksKey);
 
     if (!mounted) return;
 
-    if (!status.isGranted) {
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: true,
-        builder: (context) => NotificationPermissionDialog(
-          onAllow: () async {
-            Navigator.of(context).pop();
+    setState(() {
+      online = savedOnline ?? true;
+      daily = savedDaily ?? true;
+      _loaded = true;
+    });
+  }
 
-            final result = await Permission.notification.request();
+  Future<void> _saveOnline(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onlineKey, value);
+  }
 
-            if (!mounted) return;
+  Future<void> _saveDailyTasks(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_dailyTasksKey, value);
+  }
 
-            if (result.isGranted) {
-              setState(() {
-                online = true;
-                daily = true;
-              });
-            }
-          },
-          onDontAllow: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      );
-    } else {
-      setState(() {
-        online = true;
-        daily = true;
-      });
+  Future<bool> _isAndroid13OrAbove() async {
+    if (!Platform.isAndroid) return true;
+
+    final info = await DeviceInfoPlugin().androidInfo;
+    return info.version.sdkInt >= 33;
+  }
+
+  Future<void> _requestNotificationPermissionOnOpen() async {
+    final isAndroid13Plus = await _isAndroid13OrAbove();
+
+    if (!mounted) return;
+
+    // Android 12 or below: no runtime notification permission needed
+    if (!isAndroid13Plus) return;
+
+    final status = await Permission.notification.status;
+    if (status.isGranted) return;
+
+    final result = await Permission.notification.request();
+
+    if (result.isPermanentlyDenied) {
+      debugPrint('notification permission permanently denied');
+    }
+  }
+
+  Future<void> _handleToggle(
+    bool value,
+    Future<void> Function(bool) save,
+    void Function(bool) updateUi,
+  ) async {
+    updateUi(value);
+    await save(value);
+
+    if (!value) return;
+
+    final isAndroid13Plus = await _isAndroid13OrAbove();
+    if (!mounted || !isAndroid13Plus) return;
+
+    final status = await Permission.notification.status;
+    if (status.isGranted) return;
+
+    final result = await Permission.notification.request();
+
+    if (!mounted) return;
+
+    if (result.isPermanentlyDenied) {
+      await openAppSettings();
     }
   }
 
@@ -75,21 +124,21 @@ class _NotificationsContentState extends State<NotificationsContent> {
     final textSize = (w * 0.042).clamp(15.0, 18.0);
     final switchScale = (w * 0.0023).clamp(0.85, 1.0);
 
+    if (!_loaded) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       children: [
         _item(
           title: "Online remind",
           value: online,
           onChanged: (v) async {
-            final granted = await Permission.notification.isGranted;
-
-            if (!granted && v) {
-              if (!mounted) return;
-              await _checkAndShowPermissionDialog();
-              return;
-            }
-
-            setState(() => online = v);
+            await _handleToggle(
+              v,
+              _saveOnline,
+              (newValue) => setState(() => online = newValue),
+            );
           },
           horizontalPadding: horizontalPadding,
           verticalPadding: verticalPadding,
@@ -100,15 +149,11 @@ class _NotificationsContentState extends State<NotificationsContent> {
           title: "Daily tasks remind",
           value: daily,
           onChanged: (v) async {
-            final granted = await Permission.notification.isGranted;
-
-            if (!granted && v) {
-              if (!mounted) return;
-              await _checkAndShowPermissionDialog();
-              return;
-            }
-
-            setState(() => daily = v);
+            await _handleToggle(
+              v,
+              _saveDailyTasks,
+              (newValue) => setState(() => daily = newValue),
+            );
           },
           horizontalPadding: horizontalPadding,
           verticalPadding: verticalPadding,
@@ -140,10 +185,7 @@ class _NotificationsContentState extends State<NotificationsContent> {
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(
-                    fontSize: textSize,
-                    color: Colors.black,
-                  ),
+                  style: TextStyle(fontSize: textSize, color: Colors.black),
                 ),
               ),
               Transform.scale(
