@@ -3,6 +3,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/notification_service.dart';
 
 class NotificationsContent extends StatefulWidget {
   const NotificationsContent({super.key});
@@ -17,7 +18,7 @@ class _NotificationsContentState extends State<NotificationsContent> {
 
   bool online = true;
   bool daily = true;
-  bool _hasRequestedOnOpen  = false;
+  bool _hasRequestedOnOpen = false;
   bool _loaded = false;
 
   @override
@@ -30,8 +31,8 @@ class _NotificationsContentState extends State<NotificationsContent> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    if (!_hasRequestedOnOpen ) {
-      _hasRequestedOnOpen  = true;
+    if (!_hasRequestedOnOpen) {
+      _hasRequestedOnOpen = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _requestNotificationPermissionOnOpen();
       });
@@ -72,19 +73,32 @@ class _NotificationsContentState extends State<NotificationsContent> {
 
   Future<void> _requestNotificationPermissionOnOpen() async {
     final isAndroid13Plus = await _isAndroid13OrAbove();
+    final prefs = await SharedPreferences.getInstance();
+    final onlineEnabled = prefs.getBool(_onlineKey) ?? true;
 
     if (!mounted) return;
 
     // Android 12 or below: no runtime notification permission needed
-    if (!isAndroid13Plus) return;
+    if (!isAndroid13Plus) {
+      if (onlineEnabled) {
+        await NotificationService.testIn10Seconds();
+      }
+      return;
+    }
 
+    // Andorid 13+
     final status = await Permission.notification.status;
-    if (status.isGranted) return;
+    if (status.isGranted) {
+      if (onlineEnabled) {
+        await NotificationService.testIn10Seconds();
+      }
+      return;
+    }
 
     final result = await Permission.notification.request();
 
-    if (result.isPermanentlyDenied) {
-      debugPrint('notification permission permanently denied');
+    if (result.isGranted && onlineEnabled) {
+      await NotificationService.testIn10Seconds();
     }
   }
 
@@ -139,6 +153,12 @@ class _NotificationsContentState extends State<NotificationsContent> {
               _saveOnline,
               (newValue) => setState(() => online = newValue),
             );
+
+            if (v) {
+              await NotificationService.testIn10Seconds();
+            } else {
+              await NotificationService.cancelOnlineReminder();
+            }
           },
           horizontalPadding: horizontalPadding,
           verticalPadding: verticalPadding,
@@ -154,6 +174,13 @@ class _NotificationsContentState extends State<NotificationsContent> {
               _saveDailyTasks,
               (newValue) => setState(() => daily = newValue),
             );
+
+            // Later, when daily task reminder is implemented:
+            // if (value) {
+            //   await NotificationService.scheduleDailyTasksReminder();
+            // } else {
+            //   await NotificationService.cancelDailyTasksReminder();
+            // }
           },
           horizontalPadding: horizontalPadding,
           verticalPadding: verticalPadding,

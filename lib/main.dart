@@ -4,8 +4,14 @@ import 'ui/fortune_style.dart';
 import 'app_shell.dart';
 import 'user/user_profile.dart';
 import 'user/profile_scope.dart';
+import 'services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await NotificationService.init();
+
   runApp(const FortuneApp());
 }
 
@@ -24,12 +30,25 @@ class _FortuneAppState extends State<FortuneApp> {
   void initState() {
     super.initState();
     _profileStore = UserProfileStore(UserProfile.dev);
+    _syncNotifications();
   }
 
   @override
   void dispose() {
     _profileStore.dispose();
     super.dispose();
+  }
+
+  Future<void> _syncNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final onlineEnabled = prefs.getBool('settings_online_remind') ?? true;
+
+    if (onlineEnabled) {
+      await NotificationService.testIn10Seconds();
+    } else {
+      await NotificationService.cancelOnlineReminder();
+    }
   }
 
   @override
@@ -46,9 +65,7 @@ class _FortuneAppState extends State<FortuneApp> {
 
         // AppShell wraps ALL routes and NEVER rebuilds
         builder: (context, child) {
-          return AppShell(
-            child: child ?? const SizedBox.shrink(),
-          );
+          return AppShell(child: child ?? const SizedBox.shrink());
         },
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/Luck_Score/overall_score_widget.dart';
 import '../widgets/Luck_Score/aspect_bars_widget.dart';
 import '../widgets/Luck_Score/life_advice_widget.dart';
@@ -22,6 +23,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    updateLastOpenDate();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // small delay before the UI pop up
@@ -33,6 +35,14 @@ class HomeScreenState extends State<HomeScreen> {
         showUI = true;
       });
     });
+  }
+
+  Future<void> updateLastOpenDate() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+
+    await prefs.setString('last_open_date', today);
   }
 
   @override
@@ -74,7 +84,7 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
                 children: [
                   if (showUI) ...[
-                    HeaderWidget(username: p.username, zodiac: p.zodiacSign,),
+                    HeaderWidget(username: p.username, zodiac: p.zodiacSign),
                     const SizedBox(height: 18),
 
                     Row(
