@@ -534,67 +534,58 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                               ),
                               Align(
                                 alignment: Alignment.centerRight,
-                                child: SizedBox(
-                                  width: (w * 0.16).clamp(54.0, 72.0),
-                                  child: Center(
-                                    child: AnimatedSwitcher(
-                                      duration: const Duration(
-                                        milliseconds: 180,
-                                      ),
-                                      child: _isSaving
-                                          ? SizedBox(
-                                              key: const ValueKey('loading'),
-                                              width: (w * 0.055).clamp(
-                                                16.0,
-                                                35.0,
-                                              ),
-                                              height: (w * 0.055).clamp(
-                                                16.0,
-                                                35.0,
-                                              ),
-                                              child: const CupertinoActivityIndicator(
-                                                //strokeWidth: 2.2,
-                                                // valueColor:
-                                                //     AlwaysStoppedAnimation<Color>(
-                                                //   Colors.black,
-                                                // ),
-                                              ),
-                                            )
-                                          : TextButton(
-                                              key: const ValueKey('done'),
-                                              style: ButtonStyle(
-                                                overlayColor:
-                                                    WidgetStateProperty.all(
-                                                      Colors.transparent,
-                                                    ),
-                                                foregroundColor:
-                                                    WidgetStateProperty.resolveWith(
-                                                      (states) {
-                                                        if (states.contains(
-                                                          WidgetState.pressed,
-                                                        )) {
-                                                          return Colors.black
-                                                              .withValues(
-                                                                alpha: 0.45,
-                                                              );
-                                                        }
-                                                        return Colors.black;
-                                                      },
-                                                    ),
-                                                textStyle:
-                                                    WidgetStateProperty.all(
-                                                      TextStyle(
-                                                        fontSize: (w * 0.042)
-                                                            .clamp(15.0, 17.0),
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                              ),
-                                              onPressed: _saveProfile,
-                                              child: const Text('Done'),
+                                child: Padding(
+                                  padding: EdgeInsets.only(right: (w * 0.005).clamp(6.0, 14.0)),
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 180),
+                                    child: _isSaving
+                                        ? SizedBox(
+                                            key: const ValueKey('loading'),
+                                            width: (w * 0.055).clamp(
+                                              16.0,
+                                              35.0,
                                             ),
-                                    ),
+                                            height: (w * 0.055).clamp(
+                                              16.0,
+                                              35.0,
+                                            ),
+                                            child:
+                                                const CupertinoActivityIndicator(),
+                                          )
+                                        : TextButton(
+                                            key: const ValueKey('done'),
+                                            style: ButtonStyle(
+                                              overlayColor:
+                                                  WidgetStateProperty.all(
+                                                    Colors.transparent,
+                                                  ),
+                                              foregroundColor:
+                                                  WidgetStateProperty.resolveWith(
+                                                    (states) {
+                                                      if (states.contains(
+                                                        WidgetState.pressed,
+                                                      )) {
+                                                        return Colors.black
+                                                            .withValues(
+                                                              alpha: 0.45,
+                                                            );
+                                                      }
+                                                      return Colors.black;
+                                                    },
+                                                  ),
+                                              textStyle:
+                                                  WidgetStateProperty.all(
+                                                    TextStyle(
+                                                      fontSize: (w * 0.042)
+                                                          .clamp(15.0, 17.0),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                            ),
+                                            onPressed: _saveProfile,
+                                            child: const Text('Done'),
+                                          ),
                                   ),
                                 ),
                               ),
@@ -608,51 +599,64 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           color: Colors.black.withValues(alpha: 0.65),
                         ),
 
-                        const SizedBox(height: 40),
-
-                        Center(
-                          child: GestureDetector(
-                            onTap: _showAvatarActionSheet,
-                            child: Stack(
-                              clipBehavior: Clip.none,
+                        Expanded(
+                          child: SingleChildScrollView(
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            padding: EdgeInsets.only(
+                              top: 40,
+                              bottom:
+                                  MediaQuery.of(context).viewInsets.bottom + 24,
+                            ),
+                            child: Column(
                               children: [
-                                CircleAvatar(
-                                  radius: (w * 0.12).clamp(40.0, 56.0),
-                                  backgroundImage: avatarProvider,
-                                ),
-                                Positioned(
-                                  bottom: w * 0.0001,
-                                  right: w * 0.0001,
-                                  child: Container(
-                                    width: w * 0.07,
-                                    height: w * 0.07,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.08,
+                                Center(
+                                  child: GestureDetector(
+                                    onTap: _showAvatarActionSheet,
+                                    child: Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: (w * 0.12).clamp(40.0, 56.0),
+                                          backgroundImage: avatarProvider,
                                         ),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.camera_alt_rounded,
-                                      size: w * 0.040,
-                                      color: Colors.black87,
+                                        Positioned(
+                                          bottom: w * 0.0001,
+                                          right: w * 0.0001,
+                                          child: Container(
+                                            width: w * 0.07,
+                                            height: w * 0.07,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.08,
+                                                ),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Icon(
+                                              Icons.camera_alt_rounded,
+                                              size: w * 0.040,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+                                ),
+
+                                const SizedBox(height: 45),
+
+                                ProfileEditSection(
+                                  profile: p,
+                                  onValueChanged: _handleValueChanged,
                                 ),
                               ],
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 45),
-
-                        ProfileEditSection(
-                          profile: p,
-                          onValueChanged: _handleValueChanged,
                         ),
                       ],
                     ),

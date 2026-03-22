@@ -41,11 +41,10 @@ class _FortuneAppState extends State<FortuneApp> {
 
   Future<void> _syncNotifications() async {
     final prefs = await SharedPreferences.getInstance();
-
     final onlineEnabled = prefs.getBool('settings_online_remind') ?? true;
 
     if (onlineEnabled) {
-      await NotificationService.testIn10Seconds();
+      await NotificationService.scheduleOnlineReminder();
     } else {
       await NotificationService.cancelOnlineReminder();
     }

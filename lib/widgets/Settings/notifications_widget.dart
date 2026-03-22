@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -64,33 +62,16 @@ class _NotificationsContentState extends State<NotificationsContent> {
     await prefs.setBool(_dailyTasksKey, value);
   }
 
-  Future<bool> _isAndroid13OrAbove() async {
-    if (!Platform.isAndroid) return true;
-
-    final info = await DeviceInfoPlugin().androidInfo;
-    return info.version.sdkInt >= 33;
-  }
-
   Future<void> _requestNotificationPermissionOnOpen() async {
-    final isAndroid13Plus = await _isAndroid13OrAbove();
     final prefs = await SharedPreferences.getInstance();
     final onlineEnabled = prefs.getBool(_onlineKey) ?? true;
 
     if (!mounted) return;
 
-    // Android 12 or below: no runtime notification permission needed
-    if (!isAndroid13Plus) {
-      if (onlineEnabled) {
-        await NotificationService.testIn10Seconds();
-      }
-      return;
-    }
-
-    // Andorid 13+
     final status = await Permission.notification.status;
     if (status.isGranted) {
       if (onlineEnabled) {
-        await NotificationService.testIn10Seconds();
+        await NotificationService.scheduleOnlineReminder();
       }
       return;
     }
@@ -98,7 +79,7 @@ class _NotificationsContentState extends State<NotificationsContent> {
     final result = await Permission.notification.request();
 
     if (result.isGranted && onlineEnabled) {
-      await NotificationService.testIn10Seconds();
+      await NotificationService.scheduleOnlineReminder();
     }
   }
 
@@ -111,9 +92,7 @@ class _NotificationsContentState extends State<NotificationsContent> {
     await save(value);
 
     if (!value) return;
-
-    final isAndroid13Plus = await _isAndroid13OrAbove();
-    if (!mounted || !isAndroid13Plus) return;
+    if (!mounted) return;
 
     final status = await Permission.notification.status;
     if (status.isGranted) return;
@@ -155,7 +134,7 @@ class _NotificationsContentState extends State<NotificationsContent> {
             );
 
             if (v) {
-              await NotificationService.testIn10Seconds();
+              await NotificationService.scheduleOnlineReminder();
             } else {
               await NotificationService.cancelOnlineReminder();
             }
@@ -186,6 +165,19 @@ class _NotificationsContentState extends State<NotificationsContent> {
           verticalPadding: verticalPadding,
           textSize: textSize,
           switchScale: switchScale,
+        ),
+
+        // temp button for testing notificaiton
+        ElevatedButton(
+          onPressed: () async {
+            try {
+              await NotificationService.testIn5Seconds();
+            } catch (e, st) {
+              debugPrint('test notification error: $e');
+              debugPrint('$st');
+            }
+          },
+          child: const Text('Test notification'),
         ),
       ],
     );
