@@ -1,13 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import 'settings_info_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  static const String packageName = 'com.nkfai.luckapp';
+
   void _open(BuildContext context, String title) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => SettingsInfoScreen(title: title)),
+    );
+  }
+
+  Future<void> _openPlayStore() async {
+    final Uri uri = Uri.parse('market://details?id=$packageName');
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      // fallback to browser
+      final Uri webUri = Uri.parse(
+        'https://play.google.com/store/apps/details?id=$packageName',
+      );
+      await launchUrl(webUri);
+    }
+  }
+
+  Future<void> _shareApp() async {
+    final String playStoreUrl =
+        'https://play.google.com/store/apps/details?id=$packageName';
+
+    await Share.share(
+      'Try this app I’m using: $playStoreUrl',
+      subject: 'Luck App',
     );
   }
 
@@ -107,7 +135,7 @@ class SettingsScreen extends StatelessWidget {
                         _settingsItem(
                           icon: Icons.chat_bubble_outline,
                           title: 'Comments and recommendations',
-                          onTap: () {},
+                          onTap: () => _openPlayStore,
                           horizontalPadding: horizontalPadding,
                           verticalPadding: itemVerticalPadding,
                           iconBoxWidth: iconBoxWidth,
@@ -118,7 +146,7 @@ class SettingsScreen extends StatelessWidget {
                         _settingsItem(
                           icon: Icons.share_outlined,
                           title: 'Share to others',
-                          onTap: () {},
+                          onTap: () => _shareApp(),
                           horizontalPadding: horizontalPadding,
                           verticalPadding: itemVerticalPadding,
                           iconBoxWidth: iconBoxWidth,

@@ -1,4 +1,4 @@
-package com.example.luck_app
+package com.nkfai.luckapp
 
 import io.flutter.embedding.android.FlutterActivity
 
