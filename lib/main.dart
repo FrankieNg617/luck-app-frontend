@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:luck_app/screens/ready_screen.dart';
+import 'package:luck_app/screens/splash_screen.dart';
 import 'ui/fortune_style.dart';
 import 'app_shell.dart';
 import 'user/user_profile.dart';
@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await NotificationService.init();
 
   runApp(const FortuneApp());
@@ -60,7 +59,7 @@ class _FortuneAppState extends State<FortuneApp> {
         theme: FortuneTheme.lightTheme(),
 
         // Navigator lives here
-        home: const ReadyScreen(),
+        home: const SplashScreen(),
 
         // AppShell wraps ALL routes and NEVER rebuilds
         builder: (context, child) {
