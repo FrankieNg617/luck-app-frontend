@@ -10,10 +10,13 @@ class SetupScreen extends StatelessWidget {
     final height = size.height;
 
     final horizontalPadding = width * 0.07;
-    final titleFontSize = width * 0.07;
-    final bodyFontSize = width * 0.028;
+    final titleFontSize = width * 0.08;
+    final bodyFontSize = width * 0.033;
     final linkFontSize = width * 0.035;
-    final buttonFontSize = width * 0.05;
+    final buttonFontSize = width * 0.045;
+    final spacingLarge = height * 0.037;
+    final spacingMedium = height * 0.028;
+    final spacingSmall = height * 0.01;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -56,7 +59,10 @@ class SetupScreen extends StatelessWidget {
                       bodyFontSize: bodyFontSize,
                       linkFontSize: linkFontSize,
                       buttonFontSize: buttonFontSize,
-                      buttonHeight: height * 0.07,
+                      buttonHeight: height * 0.06,
+                      spacingLarge: spacingLarge,
+                      spacingMedium: spacingMedium,
+                      spacingSmall: spacingSmall,
                     ),
                   ),
                 ],
@@ -76,6 +82,9 @@ class _BottomContent extends StatelessWidget {
     required this.linkFontSize,
     required this.buttonFontSize,
     required this.buttonHeight,
+    required this.spacingLarge,
+    required this.spacingMedium,
+    required this.spacingSmall,
   });
 
   final double titleFontSize;
@@ -83,6 +92,9 @@ class _BottomContent extends StatelessWidget {
   final double linkFontSize;
   final double buttonFontSize;
   final double buttonHeight;
+  final double spacingLarge;
+  final double spacingMedium;
+  final double spacingSmall;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +102,7 @@ class _BottomContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Discover yourself\nthrough astrology\nwith LoveLab',
+          'Discover your\ndaily luck\nwith Luckora',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Colors.white,
@@ -99,7 +111,7 @@ class _BottomContent extends StatelessWidget {
             height: 1.12,
           ),
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: spacingLarge),
         SizedBox(
           width: double.infinity,
           height: buttonHeight.clamp(52, 64),
@@ -109,10 +121,19 @@ class _BottomContent extends StatelessWidget {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2F36D8),
-              foregroundColor: Colors.white,
+              foregroundColor: Colors.white.withValues(alpha: 0.85),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(15),
+                  bottomRight: Radius.circular(24),
+                ),
+                side: const BorderSide(
+                  color: Color.fromARGB(255, 16, 21, 158), // 👈 border color
+                  width: 1.3, // 👈 border thickness
+                ),
               ),
             ),
             child: Text(
@@ -124,17 +145,17 @@ class _BottomContent extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: spacingMedium),
         Text(
           'By clicking Continue, I agree to',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.82),
+            color: Colors.grey,
             fontSize: bodyFontSize.clamp(11, 14),
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: spacingSmall),
         Wrap(
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -148,7 +169,7 @@ class _BottomContent extends StatelessWidget {
               child: Text(
                 'Terms of Services',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: Colors.white.withValues(alpha: 0.75),
                   fontSize: linkFontSize.clamp(13, 17),
                   fontWeight: FontWeight.w700,
                 ),
@@ -161,7 +182,7 @@ class _BottomContent extends StatelessWidget {
               child: Text(
                 'Privacy Policy',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: Colors.white.withValues(alpha: 0.75),
                   fontSize: linkFontSize.clamp(13, 17),
                   fontWeight: FontWeight.w700,
                 ),
