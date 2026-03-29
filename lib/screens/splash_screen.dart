@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'dart:async';
 import 'setup_screen.dart';
 
@@ -11,13 +12,17 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   late final AssetImage _setupBg;
+  late final AssetImage _splashBg;
 
   @override
   void initState() {
     super.initState();
     _setupBg = const AssetImage('assets/backgrounds/setup_bg.png');
+    _splashBg = const AssetImage('assets/splash/splash_bg.png');
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await precacheImage(_splashBg, context);
+      FlutterNativeSplash.remove();
       _prepareAndNavigate();
     });
   }
@@ -43,11 +48,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1A0F2E),
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/splash/splash_bg.png',
+            child: Image(
+              image: _splashBg,
               fit: BoxFit.cover,
             ),
           ),
