@@ -354,7 +354,7 @@ class _SetupBirthdayWidgetState extends State<SetupBirthdayWidget> {
                 ),
                 SizedBox(height: h * 0.015),
                 Text(
-                  'Date determines your zodiac sign and compatibility',
+                  'Date determines your zodiac sign and luck score',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.70),

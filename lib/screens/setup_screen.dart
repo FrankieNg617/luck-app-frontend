@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../widgets/Setup/setup_intro_widgete.dart';
 import '../widgets/Setup/setup_gender_widget.dart';
 import '../widgets/Setup/setup_birthday_widget.dart';
+import '../widgets/Setup/setup_birth_time_widget.dart';
+import '../widgets/Setup/setup_birth_place_widget.dart';
 
-enum SetupStep { intro, gender, birthday }
+enum SetupStep { intro, gender, birthday, birthTime, birthPlace }
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
@@ -14,9 +16,9 @@ class SetupScreen extends StatefulWidget {
 
 class _SetupScreenState extends State<SetupScreen> {
   SetupStep _currentStep = SetupStep.intro;
-
-  String? _selectedGender;
   String _selectedBirthday = '01 January 2000';
+  String _selectedBirthTime = '12:00';
+  String _selectedBirthPlace = '';
 
   void _goToGenderStep() {
     setState(() {
@@ -30,9 +32,8 @@ class _SetupScreenState extends State<SetupScreen> {
     });
   }
 
-  void _goToBirthdayStep(String gender) {
+  void _goToBirthdayStep() {
     setState(() {
-      _selectedGender = gender;
       _currentStep = SetupStep.birthday;
     });
   }
@@ -45,6 +46,30 @@ class _SetupScreenState extends State<SetupScreen> {
 
   void _handleBirthdayChanged({required String value, required bool isValid}) {
     _selectedBirthday = value;
+  }
+
+  void _goToBirthTimeStep() {
+    setState(() {
+      _currentStep = SetupStep.birthTime;
+    });
+  }
+
+  void _goBackFromBirthTime() {
+    setState(() {
+      _currentStep = SetupStep.birthday;
+    });
+  }
+
+  void _goToBirthPlaceStep() {
+    setState(() {
+      _currentStep = SetupStep.birthPlace;
+    });
+  }
+
+  void _goBackFromBirthPlace() {
+    setState(() {
+      _currentStep = SetupStep.birthTime;
+    });
   }
 
   @override
@@ -121,8 +146,8 @@ class _SetupScreenState extends State<SetupScreen> {
                   cardWidth: width * 0.25,
                   sectionSpacing: height * 0.025,
                   onBack: _goBackFromGender,
-                  onSelectFemale: () => _goToBirthdayStep('Female'),
-                  onSelectMale: () => _goToBirthdayStep('Male'),
+                  onSelectFemale: _goToBirthdayStep,
+                  onSelectMale: _goToBirthdayStep,
                 ),
                 SetupStep.birthday => SetupBirthdayWidget(
                   key: const ValueKey('birthday'),
@@ -133,9 +158,41 @@ class _SetupScreenState extends State<SetupScreen> {
                   initialValue: _selectedBirthday,
                   onBack: _goBackFromBirthday,
                   onBirthdayChanged: _handleBirthdayChanged,
-                  onContinue: () {
-                    // TODO: next step
+                  onContinue: _goToBirthTimeStep,
+                ),
+                SetupStep.birthTime => SetupBirthTimeWidget(
+                  key: const ValueKey('birthTime'),
+                  titleFontSize: titleFontSize,
+                  bodyFontSize: bodyFontSize,
+                  buttonFontSize: buttonFontSize,
+                  buttonHeight: height * 0.06,
+                  initialValue: _selectedBirthTime,
+                  onBack: _goBackFromBirthTime,
+                  onTimeChanged:
+                      ({required String value, required bool isValid}) {
+                        _selectedBirthTime = value;
+                      },
+                  onNotSure: () {
+                    setState(() {
+                      _selectedBirthTime = '12:00';
+                    });
+                    _goToBirthPlaceStep();
                   },
+                  onContinue: _goToBirthPlaceStep,
+                ),
+                SetupStep.birthPlace => SetupBirthPlaceWidget(
+                  key: const ValueKey('birthPlace'),
+                  titleFontSize: titleFontSize,
+                  bodyFontSize: bodyFontSize,
+                  buttonFontSize: buttonFontSize,
+                  buttonHeight: height * 0.06,
+                  initialValue: _selectedBirthPlace,
+                  onBack: _goBackFromBirthPlace,
+                  onPlaceChanged:
+                      ({required String value, required bool isValid}) {
+                        _selectedBirthPlace = value;
+                      },
+                  onContinue: () => {},
                 ),
               },
             ),
