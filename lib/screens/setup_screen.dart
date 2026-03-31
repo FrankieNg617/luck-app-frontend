@@ -4,8 +4,9 @@ import '../widgets/Setup/setup_gender_widget.dart';
 import '../widgets/Setup/setup_birthday_widget.dart';
 import '../widgets/Setup/setup_birth_time_widget.dart';
 import '../widgets/Setup/setup_birth_place_widget.dart';
+import '../widgets/Setup/setup_username_widget.dart';
 
-enum SetupStep { intro, gender, birthday, birthTime, birthPlace }
+enum SetupStep { intro, gender, birthday, birthTime, birthPlace, username }
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
@@ -19,56 +20,54 @@ class _SetupScreenState extends State<SetupScreen> {
   String _selectedBirthday = '01 January 2000';
   String _selectedBirthTime = '12:00';
   String _selectedBirthPlace = '';
+  String _selectedUsername = '';
 
-  void _goToGenderStep() {
+  void _goToNextStep() {
     setState(() {
-      _currentStep = SetupStep.gender;
+      switch (_currentStep) {
+        case SetupStep.intro:
+          _currentStep = SetupStep.gender;
+          break;
+        case SetupStep.gender:
+          _currentStep = SetupStep.birthday;
+          break;
+        case SetupStep.birthday:
+          _currentStep = SetupStep.birthTime;
+          break;
+        case SetupStep.birthTime:
+          _currentStep = SetupStep.birthPlace;
+          break;
+        case SetupStep.birthPlace:
+          _currentStep = SetupStep.username;
+          break;
+        case SetupStep.username:
+          // TODO: finish setup
+          break;
+      }
     });
   }
 
-  void _goBackFromGender() {
+  void _goBack() {
     setState(() {
-      _currentStep = SetupStep.intro;
-    });
-  }
-
-  void _goToBirthdayStep() {
-    setState(() {
-      _currentStep = SetupStep.birthday;
-    });
-  }
-
-  void _goBackFromBirthday() {
-    setState(() {
-      _currentStep = SetupStep.gender;
-    });
-  }
-
-  void _handleBirthdayChanged({required String value, required bool isValid}) {
-    _selectedBirthday = value;
-  }
-
-  void _goToBirthTimeStep() {
-    setState(() {
-      _currentStep = SetupStep.birthTime;
-    });
-  }
-
-  void _goBackFromBirthTime() {
-    setState(() {
-      _currentStep = SetupStep.birthday;
-    });
-  }
-
-  void _goToBirthPlaceStep() {
-    setState(() {
-      _currentStep = SetupStep.birthPlace;
-    });
-  }
-
-  void _goBackFromBirthPlace() {
-    setState(() {
-      _currentStep = SetupStep.birthTime;
+      switch (_currentStep) {
+        case SetupStep.intro:
+          break;
+        case SetupStep.gender:
+          _currentStep = SetupStep.intro;
+          break;
+        case SetupStep.birthday:
+          _currentStep = SetupStep.gender;
+          break;
+        case SetupStep.birthTime:
+          _currentStep = SetupStep.birthday;
+          break;
+        case SetupStep.birthPlace:
+          _currentStep = SetupStep.birthTime;
+          break;
+        case SetupStep.username:
+          _currentStep = SetupStep.birthPlace;
+          break;
+      }
     });
   }
 
@@ -134,7 +133,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     spacingLarge: spacingLarge,
                     spacingMedium: spacingMedium,
                     spacingSmall: spacingSmall,
-                    onContinue: _goToGenderStep,
+                    onContinue: _goToNextStep,
                   ),
                 ),
                 SetupStep.gender => SetupGenderWidget(
@@ -145,9 +144,9 @@ class _SetupScreenState extends State<SetupScreen> {
                   cardHeight: height * 0.105,
                   cardWidth: width * 0.25,
                   sectionSpacing: height * 0.025,
-                  onBack: _goBackFromGender,
-                  onSelectFemale: _goToBirthdayStep,
-                  onSelectMale: _goToBirthdayStep,
+                  onBack: _goBack,
+                  onSelectFemale: _goToNextStep,
+                  onSelectMale: _goToNextStep,
                 ),
                 SetupStep.birthday => SetupBirthdayWidget(
                   key: const ValueKey('birthday'),
@@ -156,9 +155,12 @@ class _SetupScreenState extends State<SetupScreen> {
                   buttonFontSize: buttonFontSize,
                   buttonHeight: height * 0.06,
                   initialValue: _selectedBirthday,
-                  onBack: _goBackFromBirthday,
-                  onBirthdayChanged: _handleBirthdayChanged,
-                  onContinue: _goToBirthTimeStep,
+                  onBack: _goBack,
+                  onBirthdayChanged:
+                      ({required String value, required bool isValid}) {
+                        _selectedBirthday = value;
+                      },
+                  onContinue: _goToNextStep,
                 ),
                 SetupStep.birthTime => SetupBirthTimeWidget(
                   key: const ValueKey('birthTime'),
@@ -167,7 +169,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   buttonFontSize: buttonFontSize,
                   buttonHeight: height * 0.06,
                   initialValue: _selectedBirthTime,
-                  onBack: _goBackFromBirthTime,
+                  onBack: _goBack,
                   onTimeChanged:
                       ({required String value, required bool isValid}) {
                         _selectedBirthTime = value;
@@ -176,9 +178,9 @@ class _SetupScreenState extends State<SetupScreen> {
                     setState(() {
                       _selectedBirthTime = '12:00';
                     });
-                    _goToBirthPlaceStep();
+                    _goToNextStep();
                   },
-                  onContinue: _goToBirthPlaceStep,
+                  onContinue: _goToNextStep,
                 ),
                 SetupStep.birthPlace => SetupBirthPlaceWidget(
                   key: const ValueKey('birthPlace'),
@@ -187,10 +189,24 @@ class _SetupScreenState extends State<SetupScreen> {
                   buttonFontSize: buttonFontSize,
                   buttonHeight: height * 0.06,
                   initialValue: _selectedBirthPlace,
-                  onBack: _goBackFromBirthPlace,
+                  onBack: _goBack,
                   onPlaceChanged:
                       ({required String value, required bool isValid}) {
                         _selectedBirthPlace = value;
+                      },
+                  onContinue: _goToNextStep,
+                ),
+                SetupStep.username => SetupUsernameWidget(
+                  key: const ValueKey('username'),
+                  titleFontSize: titleFontSize,
+                  bodyFontSize: bodyFontSize,
+                  buttonFontSize: buttonFontSize,
+                  buttonHeight: height * 0.06,
+                  initialValue: _selectedUsername,
+                  onBack: _goBack,
+                  onNameChanged:
+                      ({required String value, required bool isValid}) {
+                        _selectedUsername = value;
                       },
                   onContinue: () => {},
                 ),

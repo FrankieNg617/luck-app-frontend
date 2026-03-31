@@ -25,10 +25,8 @@ class SetupBirthPlaceWidget extends StatefulWidget {
   final double buttonHeight;
   final String initialValue;
   final VoidCallback onBack;
-  final void Function({
-    required String value,
-    required bool isValid,
-  }) onPlaceChanged;
+  final void Function({required String value, required bool isValid})
+  onPlaceChanged;
   final VoidCallback onContinue;
 
   @override
@@ -51,10 +49,7 @@ class _SetupBirthPlaceWidgetState extends State<SetupBirthPlaceWidget> {
   }
 
   void _notifyParent() {
-    widget.onPlaceChanged(
-      value: _selectedPlace,
-      isValid: _hasPlace,
-    );
+    widget.onPlaceChanged(value: _selectedPlace, isValid: _hasPlace);
   }
 
   Future<void> _openPlaceSearchSheet() async {
@@ -165,11 +160,13 @@ class _SetupBirthPlaceWidgetState extends State<SetupBirthPlaceWidget> {
                     onPressed: _hasPlace ? widget.onContinue : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2F36D8),
-                      disabledBackgroundColor:
-                          const Color(0xFF2F36D8).withValues(alpha: 0.45),
+                      disabledBackgroundColor: const Color(
+                        0xFF2F36D8,
+                      ).withValues(alpha: 0.45),
                       foregroundColor: Colors.white.withValues(alpha: 0.88),
-                      disabledForegroundColor:
-                          Colors.white.withValues(alpha: 0.65),
+                      disabledForegroundColor: Colors.white.withValues(
+                        alpha: 0.65,
+                      ),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: const BorderRadius.only(
@@ -229,6 +226,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
   Timer? _debounce;
   int _requestId = 0;
   bool _isSelecting = false;
+  bool _showNoLocationMsg = false;
 
   List<_PlaceSuggestion> _suggestions = [];
 
@@ -257,9 +255,14 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
       _requestId++;
       setState(() {
         _suggestions = [];
+        _showNoLocationMsg = false;
       });
       return;
     }
+
+    setState(() {
+      _showNoLocationMsg = false;
+    });
 
     _debounce = Timer(const Duration(milliseconds: 350), () {
       _fetchSuggestions(query);
@@ -272,6 +275,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
       if (!mounted) return;
       setState(() {
         _suggestions = [];
+        _showNoLocationMsg = false;
       });
       return;
     }
@@ -295,6 +299,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
       if (response.statusCode != 200) {
         setState(() {
           _suggestions = [];
+          _showNoLocationMsg = true;
         });
         return;
       }
@@ -322,6 +327,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
 
       setState(() {
         _suggestions = results;
+        _showNoLocationMsg = results.isEmpty;
       });
     } catch (_) {
       if (!mounted) return;
@@ -330,6 +336,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
 
       setState(() {
         _suggestions = [];
+        _showNoLocationMsg = true;
       });
     }
   }
@@ -373,9 +380,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
         height: h * 0.93,
         decoration: BoxDecoration(
           color: const Color(0xFF4B1367),
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(25),
-          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.10),
             width: 1,
@@ -458,84 +463,93 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
                   ],
                 ),
                 SizedBox(height: h * 0.018),
-                Text(
-                  'Powered by Google',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.90),
-                    fontSize: (w * 0.033).clamp(12.0, 15.0),
-                    fontWeight: FontWeight.w500,
+                if (_suggestions.isEmpty) ...[
+                  Text(
+                    'Powered by Google',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.90),
+                      fontSize: (w * 0.033).clamp(12.0, 15.0),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                SizedBox(height: h * 0.018),
-                Expanded(
-                  child: _suggestions.isEmpty
-                      ? const SizedBox.shrink()
-                      : ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemCount: _suggestions.length,
-                          itemBuilder: (context, index) {
-                            final suggestion = _suggestions[index];
+                  if (_showNoLocationMsg) ...[
+                    SizedBox(height: h * 0.15),
+                    Text(
+                      'No such location.\nPlease try again',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.90),
+                        fontSize: (w * 0.044).clamp(14.0, 17.0),
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
+                ] else ...[
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: _suggestions.length,
+                      itemBuilder: (context, index) {
+                        final suggestion = _suggestions[index];
 
-                            return Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () => _selectPlace(suggestion),
-                                splashColor: Colors.transparent,
-                                highlightColor:
-                                    Colors.white.withValues(alpha: 0.06),
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: (h * 0.017).clamp(12.0, 16.0),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.10,
-                                        ),
-                                        width: 1,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        suggestion.title,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize:
-                                              (w * 0.045).clamp(16.0, 18.0),
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      if (suggestion.subtitle.isNotEmpty) ...[
-                                        SizedBox(
-                                          height:
-                                              (h * 0.005).clamp(4.0, 6.0),
-                                        ),
-                                        Text(
-                                          suggestion.subtitle,
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.55,
-                                            ),
-                                            fontSize: (w * 0.035)
-                                                .clamp(13.0, 14.5),
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _selectPlace(suggestion),
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.white.withValues(
+                              alpha: 0.06,
+                            ),
+                            child: Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.symmetric(
+                                vertical: (h * 0.017).clamp(12.0, 16.0),
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.10),
+                                    width: 1,
                                   ),
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    suggestion.title,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: (w * 0.045).clamp(16.0, 18.0),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  if (suggestion.subtitle.isNotEmpty) ...[
+                                    SizedBox(
+                                      height: (h * 0.005).clamp(4.0, 6.0),
+                                    ),
+                                    Text(
+                                      suggestion.subtitle,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.55,
+                                        ),
+                                        fontSize: (w * 0.035).clamp(13.0, 14.5),
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
