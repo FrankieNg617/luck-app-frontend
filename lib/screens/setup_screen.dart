@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../widgets/Setup/setup_intro_widgete.dart';
 import '../widgets/Setup/setup_gender_widget.dart';
 import '../widgets/Setup/setup_birthday_widget.dart';
@@ -17,10 +22,18 @@ class SetupScreen extends StatefulWidget {
 
 class _SetupScreenState extends State<SetupScreen> {
   SetupStep _currentStep = SetupStep.intro;
+
+  String _selectedGender = '';
   String _selectedBirthday = '01 January 2000';
   String _selectedBirthTime = '12:00';
-  String _selectedBirthPlace = '';
+  SetupPlaceSelection? _selectedBirthPlace;
   String _selectedUsername = '';
+
+  bool _isSubmitting = false;
+
+  static const String _baseUrl = 'http://10.0.2.2:3000';
+  // emulator -> 10.0.2.2
+  // real phone -> change to your computer LAN IP like http://192.168.1.5:3000
 
   void _goToNextStep() {
     setState(() {
@@ -41,7 +54,6 @@ class _SetupScreenState extends State<SetupScreen> {
           _currentStep = SetupStep.username;
           break;
         case SetupStep.username:
-          // TODO: finish setup
           break;
       }
     });
@@ -69,6 +81,112 @@ class _SetupScreenState extends State<SetupScreen> {
           break;
       }
     });
+  }
+
+  Future<void> _submitSetup() async {
+    if (_isSubmitting) return;
+    if (_selectedGender.trim().isEmpty) return;
+    if (_selectedUsername.trim().isEmpty) return;
+    if (_selectedBirthPlace == null) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final payload = {
+        'username': _selectedUsername.trim(),
+        'gender': _selectedGender.trim(),
+        'birthDate': _formatBirthdayForBackend(_selectedBirthday),
+        'birthTime': _selectedBirthTime,
+        'birthPlace': _selectedBirthPlace!.displayName,
+        'birthTz': _selectedBirthPlace!.timeZoneId,
+        'lat': _selectedBirthPlace!.lat,
+        'lon': _selectedBirthPlace!.lon,
+      };
+
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/users'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception(data['message'] ?? 'Failed to create user profile.');
+      }
+
+      final userId = (data['userId'] ?? '').toString();
+      if (userId.isEmpty) {
+        throw Exception('Backend did not return userId.');
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_id', userId);
+      await prefs.setBool('setup_completed', true);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile created successfully')),
+      );
+
+      // TODO: replace this with your home screen navigation
+      // Navigator.of(context).pushReplacement(
+      //   MaterialPageRoute(builder: (_) => const HomeScreen()),
+      // );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  String _formatBirthdayForBackend(String value) {
+    final parts = value.trim().split(RegExp(r'\s+'));
+    if (parts.length != 3) {
+      throw Exception('Invalid birthday format: $value');
+    }
+
+    final day = int.parse(parts[0]);
+    final month = _monthNumber(parts[1]);
+    final year = int.parse(parts[2]);
+
+    final yyyy = year.toString().padLeft(4, '0');
+    final mm = month.toString().padLeft(2, '0');
+    final dd = day.toString().padLeft(2, '0');
+
+    return '$yyyy-$mm-$dd';
+  }
+
+  int _monthNumber(String monthName) {
+    const months = {
+      'January': 1,
+      'February': 2,
+      'March': 3,
+      'April': 4,
+      'May': 5,
+      'June': 6,
+      'July': 7,
+      'August': 8,
+      'September': 9,
+      'October': 10,
+      'November': 11,
+      'December': 12,
+    };
+
+    final value = months[monthName];
+    if (value == null) {
+      throw Exception('Invalid month: $monthName');
+    }
+    return value;
   }
 
   @override
@@ -145,8 +263,14 @@ class _SetupScreenState extends State<SetupScreen> {
                   cardWidth: width * 0.25,
                   sectionSpacing: height * 0.025,
                   onBack: _goBack,
-                  onSelectFemale: _goToNextStep,
-                  onSelectMale: _goToNextStep,
+                  onSelectFemale: () {
+                    _selectedGender = 'female';
+                    _goToNextStep();
+                  },
+                  onSelectMale: () {
+                    _selectedGender = 'male';
+                    _goToNextStep();
+                  },
                 ),
                 SetupStep.birthday => SetupBirthdayWidget(
                   key: const ValueKey('birthday'),
@@ -191,8 +315,11 @@ class _SetupScreenState extends State<SetupScreen> {
                   initialValue: _selectedBirthPlace,
                   onBack: _goBack,
                   onPlaceChanged:
-                      ({required String value, required bool isValid}) {
-                        _selectedBirthPlace = value;
+                      ({
+                        required SetupPlaceSelection? place,
+                        required bool isValid,
+                      }) {
+                        _selectedBirthPlace = place;
                       },
                   onContinue: _goToNextStep,
                 ),
@@ -208,7 +335,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       ({required String value, required bool isValid}) {
                         _selectedUsername = value;
                       },
-                  onContinue: () => {},
+                  onContinue: _isSubmitting ? () {} : _submitSetup,
                 ),
               },
             ),

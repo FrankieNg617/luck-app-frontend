@@ -6,6 +6,20 @@ import 'package:http/http.dart' as http;
 
 import '../../config/google_api.dart';
 
+class SetupPlaceSelection {
+  const SetupPlaceSelection({
+    required this.displayName,
+    required this.lat,
+    required this.lon,
+    required this.timeZoneId,
+  });
+
+  final String displayName;
+  final double lat;
+  final double lon;
+  final String timeZoneId;
+}
+
 class SetupBirthPlaceWidget extends StatefulWidget {
   const SetupBirthPlaceWidget({
     super.key,
@@ -23,10 +37,12 @@ class SetupBirthPlaceWidget extends StatefulWidget {
   final double bodyFontSize;
   final double buttonFontSize;
   final double buttonHeight;
-  final String initialValue;
+  final SetupPlaceSelection? initialValue;
   final VoidCallback onBack;
-  final void Function({required String value, required bool isValid})
-  onPlaceChanged;
+  final void Function({
+    required SetupPlaceSelection? place,
+    required bool isValid,
+  }) onPlaceChanged;
   final VoidCallback onContinue;
 
   @override
@@ -34,14 +50,14 @@ class SetupBirthPlaceWidget extends StatefulWidget {
 }
 
 class _SetupBirthPlaceWidgetState extends State<SetupBirthPlaceWidget> {
-  late String _selectedPlace;
+  SetupPlaceSelection? _selectedPlace;
 
-  bool get _hasPlace => _selectedPlace.trim().isNotEmpty;
+  bool get _hasPlace => _selectedPlace != null;
 
   @override
   void initState() {
     super.initState();
-    _selectedPlace = widget.initialValue.trim();
+    _selectedPlace = widget.initialValue;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _notifyParent();
@@ -49,17 +65,20 @@ class _SetupBirthPlaceWidgetState extends State<SetupBirthPlaceWidget> {
   }
 
   void _notifyParent() {
-    widget.onPlaceChanged(value: _selectedPlace, isValid: _hasPlace);
+    widget.onPlaceChanged(
+      place: _selectedPlace,
+      isValid: _hasPlace,
+    );
   }
 
   Future<void> _openPlaceSearchSheet() async {
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showModalBottomSheet<SetupPlaceSelection>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.25),
       builder: (_) {
-        return _BirthPlaceSearchSheet();
+        return const _BirthPlaceSearchSheet();
       },
     );
 
@@ -139,7 +158,9 @@ class _SetupBirthPlaceWidgetState extends State<SetupBirthPlaceWidget> {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      _hasPlace ? _selectedPlace : 'Place of birth',
+                      _hasPlace
+                          ? _selectedPlace!.displayName
+                          : 'Place of birth',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -202,11 +223,13 @@ class _SetupBirthPlaceWidgetState extends State<SetupBirthPlaceWidget> {
 
 class _PlaceSuggestion {
   const _PlaceSuggestion({
+    required this.placeId,
     required this.title,
     required this.subtitle,
     required this.fullText,
   });
 
+  final String placeId;
   final String title;
   final String subtitle;
   final String fullText;
@@ -227,6 +250,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
   int _requestId = 0;
   bool _isSelecting = false;
   bool _showNoLocationMsg = false;
+  String? _loadingPlaceId;
 
   List<_PlaceSuggestion> _suggestions = [];
 
@@ -256,6 +280,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
       setState(() {
         _suggestions = [];
         _showNoLocationMsg = false;
+        _loadingPlaceId = null;
       });
       return;
     }
@@ -283,11 +308,11 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
     final currentRequestId = ++_requestId;
 
     final url =
-        "https://maps.googleapis.com/maps/api/place/autocomplete/json"
-        "?input=${Uri.encodeQueryComponent(query)}"
-        "&types=(cities)"
-        "&language=en"
-        "&key=$googlePlacesApiKey";
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json'
+        '?input=${Uri.encodeQueryComponent(query)}'
+        '&types=(cities)'
+        '&language=en'
+        '&key=$googlePlacesApiKey';
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -304,22 +329,24 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
         return;
       }
 
-      final data = json.decode(response.body);
+      final data = json.decode(response.body) as Map<String, dynamic>;
       final predictions = (data['predictions'] as List?) ?? [];
 
       final results = predictions.take(6).map<_PlaceSuggestion>((e) {
-        final description = e['description'].toString();
+        final map = e as Map<String, dynamic>;
+        final description = (map['description'] ?? '').toString();
         final parts = description.split(',').map((s) => s.trim()).toList();
 
         final title = parts.isNotEmpty ? parts.first : description;
         final subtitle = parts.length > 1 ? parts.sublist(1).join(', ') : '';
 
         return _PlaceSuggestion(
+          placeId: (map['place_id'] ?? '').toString(),
           title: title,
           subtitle: subtitle,
           fullText: description,
         );
-      }).toList();
+      }).where((e) => e.placeId.isNotEmpty).toList();
 
       if (!mounted) return;
       if (currentRequestId != _requestId) return;
@@ -341,15 +368,91 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
     }
   }
 
-  void _selectPlace(_PlaceSuggestion suggestion) {
+  Future<SetupPlaceSelection> _fetchPlaceDetailsAndTimezone(
+    _PlaceSuggestion suggestion,
+  ) async {
+    final detailsUrl =
+        'https://maps.googleapis.com/maps/api/place/details/json'
+        '?place_id=${Uri.encodeQueryComponent(suggestion.placeId)}'
+        '&fields=name,formatted_address,geometry'
+        '&language=en'
+        '&key=$googlePlacesApiKey';
+
+    final detailsResponse = await http.get(Uri.parse(detailsUrl));
+
+    if (detailsResponse.statusCode != 200) {
+      throw Exception('Failed to fetch place details.');
+    }
+
+    final detailsData = json.decode(detailsResponse.body) as Map<String, dynamic>;
+    final result = detailsData['result'] as Map<String, dynamic>?;
+    final geometry = result?['geometry'] as Map<String, dynamic>?;
+    final location = geometry?['location'] as Map<String, dynamic>?;
+
+    final lat = (location?['lat'] as num?)?.toDouble();
+    final lon = (location?['lng'] as num?)?.toDouble();
+
+    if (lat == null || lon == null) {
+      throw Exception('Missing place coordinates.');
+    }
+
+    final timestamp =
+        DateTime.now().millisecondsSinceEpoch ~/ Duration.millisecondsPerSecond;
+
+    final timezoneUrl =
+        'https://maps.googleapis.com/maps/api/timezone/json'
+        '?location=$lat,$lon'
+        '&timestamp=$timestamp'
+        '&key=$googlePlacesApiKey';
+
+    final timezoneResponse = await http.get(Uri.parse(timezoneUrl));
+
+    if (timezoneResponse.statusCode != 200) {
+      throw Exception('Failed to fetch timezone.');
+    }
+
+    final timezoneData = json.decode(timezoneResponse.body) as Map<String, dynamic>;
+    final timeZoneId = (timezoneData['timeZoneId'] ?? '').toString();
+
+    if (timeZoneId.isEmpty) {
+      throw Exception('Missing timezone.');
+    }
+
+    final formattedAddress =
+        (result?['formatted_address'] ?? suggestion.fullText).toString();
+
+    return SetupPlaceSelection(
+      displayName: formattedAddress,
+      lat: lat,
+      lon: lon,
+      timeZoneId: timeZoneId,
+    );
+  }
+
+  Future<void> _selectPlace(_PlaceSuggestion suggestion) async {
     _debounce?.cancel();
     _requestId++;
     _isSelecting = true;
 
     FocusScope.of(context).unfocus();
 
-    if (mounted) {
-      Navigator.of(context).pop(suggestion.title);
+    setState(() {
+      _loadingPlaceId = suggestion.placeId;
+      _showNoLocationMsg = false;
+    });
+
+    try {
+      final selection = await _fetchPlaceDetailsAndTimezone(suggestion);
+
+      if (!mounted) return;
+      Navigator.of(context).pop(selection);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadingPlaceId = null;
+        _showNoLocationMsg = true;
+      });
+      _isSelecting = false;
     }
   }
 
@@ -493,15 +596,14 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
                       itemCount: _suggestions.length,
                       itemBuilder: (context, index) {
                         final suggestion = _suggestions[index];
+                        final isLoading = _loadingPlaceId == suggestion.placeId;
 
                         return Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            onTap: () => _selectPlace(suggestion),
+                            onTap: isLoading ? null : () => _selectPlace(suggestion),
                             splashColor: Colors.transparent,
-                            highlightColor: Colors.white.withValues(
-                              alpha: 0.06,
-                            ),
+                            highlightColor: Colors.white.withValues(alpha: 0.06),
                             child: Container(
                               width: double.infinity,
                               padding: EdgeInsets.symmetric(
@@ -515,29 +617,49 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
                                   ),
                                 ),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  Text(
-                                    suggestion.title,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: (w * 0.045).clamp(16.0, 18.0),
-                                      fontWeight: FontWeight.w600,
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          suggestion.title,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize:
+                                                (w * 0.045).clamp(16.0, 18.0),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        if (suggestion.subtitle.isNotEmpty) ...[
+                                          SizedBox(
+                                            height: (h * 0.005).clamp(4.0, 6.0),
+                                          ),
+                                          Text(
+                                            suggestion.subtitle,
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.55,
+                                              ),
+                                              fontSize:
+                                                  (w * 0.035).clamp(13.0, 14.5),
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
-                                  if (suggestion.subtitle.isNotEmpty) ...[
+                                  if (isLoading) ...[
                                     SizedBox(
-                                      height: (h * 0.005).clamp(4.0, 6.0),
-                                    ),
-                                    Text(
-                                      suggestion.subtitle,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.55,
+                                      width: (w * 0.05).clamp(18.0, 22.0),
+                                      height: (w * 0.05).clamp(18.0, 22.0),
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
                                         ),
-                                        fontSize: (w * 0.035).clamp(13.0, 14.5),
-                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
                                   ],
