@@ -99,7 +99,7 @@ class _SetupScreenState extends State<SetupScreen> {
         'gender': _selectedGender.trim(),
         'birthDate': _formatBirthdayForBackend(_selectedBirthday),
         'birthTime': _selectedBirthTime,
-        'birthPlace': _selectedBirthPlace!.displayName,
+        'birthPlace': _selectedBirthPlace!.cityName,
         'birthTz': _selectedBirthPlace!.timeZoneId,
         'lat': _selectedBirthPlace!.lat,
         'lon': _selectedBirthPlace!.lon,
@@ -263,6 +263,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   cardWidth: width * 0.25,
                   sectionSpacing: height * 0.025,
                   onBack: _goBack,
+                  initialValue: _selectedGender,
                   onSelectFemale: () {
                     _selectedGender = 'female';
                     _goToNextStep();

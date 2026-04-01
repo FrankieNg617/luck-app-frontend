@@ -8,13 +8,15 @@ import '../../config/google_api.dart';
 
 class SetupPlaceSelection {
   const SetupPlaceSelection({
-    required this.displayName,
+    required this.cityName,
+    required this.fullAddress,
     required this.lat,
     required this.lon,
     required this.timeZoneId,
   });
 
-  final String displayName;
+  final String cityName;
+  final String fullAddress;
   final double lat;
   final double lon;
   final String timeZoneId;
@@ -42,7 +44,8 @@ class SetupBirthPlaceWidget extends StatefulWidget {
   final void Function({
     required SetupPlaceSelection? place,
     required bool isValid,
-  }) onPlaceChanged;
+  })
+  onPlaceChanged;
   final VoidCallback onContinue;
 
   @override
@@ -65,10 +68,7 @@ class _SetupBirthPlaceWidgetState extends State<SetupBirthPlaceWidget> {
   }
 
   void _notifyParent() {
-    widget.onPlaceChanged(
-      place: _selectedPlace,
-      isValid: _hasPlace,
-    );
+    widget.onPlaceChanged(place: _selectedPlace, isValid: _hasPlace);
   }
 
   Future<void> _openPlaceSearchSheet() async {
@@ -158,9 +158,7 @@ class _SetupBirthPlaceWidgetState extends State<SetupBirthPlaceWidget> {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      _hasPlace
-                          ? _selectedPlace!.displayName
-                          : 'Place of birth',
+                      _hasPlace ? _selectedPlace!.cityName : 'Place of birth',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -250,6 +248,7 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
   int _requestId = 0;
   bool _isSelecting = false;
   bool _showNoLocationMsg = false;
+  bool get _isLoadingSelection => _loadingPlaceId != null;
   String? _loadingPlaceId;
 
   List<_PlaceSuggestion> _suggestions = [];
@@ -332,21 +331,27 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
       final data = json.decode(response.body) as Map<String, dynamic>;
       final predictions = (data['predictions'] as List?) ?? [];
 
-      final results = predictions.take(6).map<_PlaceSuggestion>((e) {
-        final map = e as Map<String, dynamic>;
-        final description = (map['description'] ?? '').toString();
-        final parts = description.split(',').map((s) => s.trim()).toList();
+      final results = predictions
+          .take(6)
+          .map<_PlaceSuggestion>((e) {
+            final map = e as Map<String, dynamic>;
+            final description = (map['description'] ?? '').toString();
+            final parts = description.split(',').map((s) => s.trim()).toList();
 
-        final title = parts.isNotEmpty ? parts.first : description;
-        final subtitle = parts.length > 1 ? parts.sublist(1).join(', ') : '';
+            final title = parts.isNotEmpty ? parts.first : description;
+            final subtitle = parts.length > 1
+                ? parts.sublist(1).join(', ')
+                : '';
 
-        return _PlaceSuggestion(
-          placeId: (map['place_id'] ?? '').toString(),
-          title: title,
-          subtitle: subtitle,
-          fullText: description,
-        );
-      }).where((e) => e.placeId.isNotEmpty).toList();
+            return _PlaceSuggestion(
+              placeId: (map['place_id'] ?? '').toString(),
+              title: title,
+              subtitle: subtitle,
+              fullText: description,
+            );
+          })
+          .where((e) => e.placeId.isNotEmpty)
+          .toList();
 
       if (!mounted) return;
       if (currentRequestId != _requestId) return;
@@ -384,7 +389,8 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
       throw Exception('Failed to fetch place details.');
     }
 
-    final detailsData = json.decode(detailsResponse.body) as Map<String, dynamic>;
+    final detailsData =
+        json.decode(detailsResponse.body) as Map<String, dynamic>;
     final result = detailsData['result'] as Map<String, dynamic>?;
     final geometry = result?['geometry'] as Map<String, dynamic>?;
     final location = geometry?['location'] as Map<String, dynamic>?;
@@ -411,7 +417,8 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
       throw Exception('Failed to fetch timezone.');
     }
 
-    final timezoneData = json.decode(timezoneResponse.body) as Map<String, dynamic>;
+    final timezoneData =
+        json.decode(timezoneResponse.body) as Map<String, dynamic>;
     final timeZoneId = (timezoneData['timeZoneId'] ?? '').toString();
 
     if (timeZoneId.isEmpty) {
@@ -422,7 +429,8 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
         (result?['formatted_address'] ?? suggestion.fullText).toString();
 
     return SetupPlaceSelection(
-      displayName: formattedAddress,
+      cityName: suggestion.title,
+      fullAddress: formattedAddress,
       lat: lat,
       lon: lon,
       timeZoneId: timeZoneId,
@@ -491,188 +499,211 @@ class _BirthPlaceSearchSheetState extends State<_BirthPlaceSearchSheet> {
         ),
         child: SafeArea(
           top: false,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            child: Column(
-              children: [
-                SizedBox(height: h * 0.020),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: (h * 0.04).clamp(48.0, 56.0),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: (w * 0.030).clamp(12.0, 18.0),
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.search,
-                              color: Colors.white.withValues(alpha: 0.60),
-                              size: (w * 0.06).clamp(20.0, 24.0),
-                            ),
-                            SizedBox(width: (w * 0.025).clamp(8.0, 12.0)),
-                            Expanded(
-                              child: TextField(
-                                controller: _controller,
-                                focusNode: _focusNode,
-                                autofocus: true,
-                                textCapitalization: TextCapitalization.words,
-                                cursorColor: Colors.white,
-                                cursorHeight: h * 0.026,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: (w * 0.045).clamp(15.0, 19.0),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: 'Search',
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  hintStyle: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.35),
+          child: AbsorbPointer(
+            absorbing: _isLoadingSelection,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                children: [
+                  SizedBox(height: h * 0.020),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: (h * 0.04).clamp(48.0, 56.0),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: (w * 0.030).clamp(12.0, 18.0),
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.search,
+                                color: Colors.white.withValues(alpha: 0.60),
+                                size: (w * 0.06).clamp(20.0, 24.0),
+                              ),
+                              SizedBox(width: (w * 0.025).clamp(8.0, 12.0)),
+                              Expanded(
+                                child: TextField(
+                                  controller: _controller,
+                                  focusNode: _focusNode,
+                                  autofocus: true,
+                                  textCapitalization: TextCapitalization.words,
+                                  cursorColor: Colors.white,
+                                  cursorHeight: h * 0.026,
+                                  style: TextStyle(
+                                    color: Colors.white,
                                     fontSize: (w * 0.045).clamp(15.0, 19.0),
                                     fontWeight: FontWeight.w500,
                                   ),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search',
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    hintStyle: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                      fontSize: (w * 0.045).clamp(15.0, 19.0),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: (w * 0.010).clamp(4.0, 8.0)),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white.withValues(alpha: 0.92),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: (w * 0.01).clamp(2.0, 6.0),
+                      SizedBox(width: (w * 0.010).clamp(4.0, 8.0)),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white.withValues(alpha: 0.92),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: (w * 0.01).clamp(2.0, 6.0),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: (w * 0.04).clamp(15.0, 19.0),
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: (w * 0.04).clamp(15.0, 19.0),
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: h * 0.018),
-                if (_suggestions.isEmpty) ...[
-                  Text(
-                    'Powered by Google',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.90),
-                      fontSize: (w * 0.033).clamp(12.0, 15.0),
-                      fontWeight: FontWeight.w500,
-                    ),
+                    ],
                   ),
-                  if (_showNoLocationMsg) ...[
-                    SizedBox(height: h * 0.15),
+                  SizedBox(height: h * 0.018),
+                  if (_suggestions.isEmpty) ...[
                     Text(
-                      'No such location.\nPlease try again',
-                      textAlign: TextAlign.center,
+                      'Powered by Google',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.90),
-                        fontSize: (w * 0.044).clamp(14.0, 17.0),
-                        fontWeight: FontWeight.w600,
-                        height: 1.4,
+                        fontSize: (w * 0.033).clamp(12.0, 15.0),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (_showNoLocationMsg) ...[
+                      SizedBox(height: h * 0.15),
+                      Text(
+                        'No such location.\nPlease try again',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.90),
+                          fontSize: (w * 0.044).clamp(14.0, 17.0),
+                          fontWeight: FontWeight.w600,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                  ] else ...[
+                    Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: _suggestions.length,
+                        itemBuilder: (context, index) {
+                          final suggestion = _suggestions[index];
+                          final isLoading =
+                              _loadingPlaceId == suggestion.placeId;
+
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: isLoading
+                                  ? null
+                                  : () => _selectPlace(suggestion),
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.white.withValues(
+                                alpha: 0.06,
+                              ),
+                              child: Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(
+                                  vertical: (h * 0.017).clamp(12.0, 16.0),
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.10,
+                                      ),
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            suggestion.title,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: (w * 0.045).clamp(
+                                                16.0,
+                                                18.0,
+                                              ),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          if (suggestion
+                                              .subtitle
+                                              .isNotEmpty) ...[
+                                            SizedBox(
+                                              height: (h * 0.005).clamp(
+                                                4.0,
+                                                6.0,
+                                              ),
+                                            ),
+                                            Text(
+                                              suggestion.subtitle,
+                                              style: TextStyle(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.55,
+                                                ),
+                                                fontSize: (w * 0.035).clamp(
+                                                  13.0,
+                                                  14.5,
+                                                ),
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    if (isLoading) ...[
+                                      SizedBox(
+                                        width: (w * 0.05).clamp(18.0, 22.0),
+                                        height: (w * 0.05).clamp(18.0, 22.0),
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2.2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
-                  const Spacer(),
-                ] else ...[
-                  Expanded(
-                    child: ListView.builder(
-                      padding: EdgeInsets.zero,
-                      itemCount: _suggestions.length,
-                      itemBuilder: (context, index) {
-                        final suggestion = _suggestions[index];
-                        final isLoading = _loadingPlaceId == suggestion.placeId;
-
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: isLoading ? null : () => _selectPlace(suggestion),
-                            splashColor: Colors.transparent,
-                            highlightColor: Colors.white.withValues(alpha: 0.06),
-                            child: Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.symmetric(
-                                vertical: (h * 0.017).clamp(12.0, 16.0),
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.10),
-                                    width: 1,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          suggestion.title,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize:
-                                                (w * 0.045).clamp(16.0, 18.0),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        if (suggestion.subtitle.isNotEmpty) ...[
-                                          SizedBox(
-                                            height: (h * 0.005).clamp(4.0, 6.0),
-                                          ),
-                                          Text(
-                                            suggestion.subtitle,
-                                            style: TextStyle(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.55,
-                                              ),
-                                              fontSize:
-                                                  (w * 0.035).clamp(13.0, 14.5),
-                                              fontWeight: FontWeight.w400,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                  if (isLoading) ...[
-                                    SizedBox(
-                                      width: (w * 0.05).clamp(18.0, 22.0),
-                                      height: (w * 0.05).clamp(18.0, 22.0),
-                                      child: const CircularProgressIndicator(
-                                        strokeWidth: 2.2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
                 ],
-              ],
+              ),
             ),
           ),
         ),
