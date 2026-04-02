@@ -1,15 +1,15 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../widgets/Setup/setup_intro_widgete.dart';
 import '../widgets/Setup/setup_gender_widget.dart';
 import '../widgets/Setup/setup_birthday_widget.dart';
 import '../widgets/Setup/setup_birth_time_widget.dart';
 import '../widgets/Setup/setup_birth_place_widget.dart';
 import '../widgets/Setup/setup_username_widget.dart';
+import 'onboarding_screen.dart';
+import 'ready_screen.dart';
 
 enum SetupStep { intro, gender, birthday, birthTime, birthPlace, username }
 
@@ -21,6 +21,7 @@ class SetupScreen extends StatefulWidget {
 }
 
 class _SetupScreenState extends State<SetupScreen> {
+  late final AssetImage _readyScreenBg;
   SetupStep _currentStep = SetupStep.intro;
 
   String _selectedGender = '';
@@ -34,6 +35,15 @@ class _SetupScreenState extends State<SetupScreen> {
   static const String _baseUrl = 'http://10.0.2.2:3000';
   // emulator -> 10.0.2.2
   // real phone -> change to your computer LAN IP like http://192.168.1.5:3000
+
+  @override
+  void initState() {
+    super.initState();
+    _readyScreenBg = const AssetImage('assets/backgrounds/ready_background.png');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await precacheImage(_readyScreenBg, context);
+    });
+  }
 
   void _goToNextStep() {
     setState(() {
@@ -94,55 +104,70 @@ class _SetupScreenState extends State<SetupScreen> {
     });
 
     try {
-      final payload = {
-        'username': _selectedUsername.trim(),
-        'gender': _selectedGender.trim(),
-        'birthDate': _formatBirthdayForBackend(_selectedBirthday),
-        'birthTime': _selectedBirthTime,
-        'birthPlace': _selectedBirthPlace!.cityName,
-        'birthTz': _selectedBirthPlace!.timeZoneId,
-        'lat': _selectedBirthPlace!.lat,
-        'lon': _selectedBirthPlace!.lon,
-      };
-
-      final response = await http.post(
-        Uri.parse('$_baseUrl/api/users'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(payload),
-      );
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception(data['message'] ?? 'Failed to create user profile.');
-      }
-
-      final userId = (data['userId'] ?? '').toString();
-      if (userId.isEmpty) {
-        throw Exception('Backend did not return userId.');
-      }
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_id', userId);
-      await prefs.setBool('setup_completed', true);
-
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile created successfully')),
-      );
+      await Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => OnboardingScreen(
+            sendRequest: () async {
+              final payload = {
+                'username': _selectedUsername.trim(),
+                'gender': _selectedGender.trim(),
+                'birthDate': _formatBirthdayForBackend(_selectedBirthday),
+                'birthTime': _selectedBirthTime,
+                'birthPlace': _selectedBirthPlace!.cityName,
+                'birthTz': _selectedBirthPlace!.timeZoneId,
+                'lat': _selectedBirthPlace!.lat,
+                'lon': _selectedBirthPlace!.lon,
+              };
 
-      // TODO: replace this with your home screen navigation
-      // Navigator.of(context).pushReplacement(
-      //   MaterialPageRoute(builder: (_) => const HomeScreen()),
-      // );
+              final response = await http.post(
+                Uri.parse('$_baseUrl/api/users'),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode(payload),
+              );
+
+              final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+              if (response.statusCode < 200 || response.statusCode >= 300) {
+                throw Exception(
+                  data['message'] ?? 'Failed to create user profile.',
+                );
+              }
+
+              final userId = (data['userId'] ?? '').toString();
+              if (userId.isEmpty) {
+                throw Exception('Backend did not return userId.');
+              }
+
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('user_id', userId);
+              await prefs.setBool('setup_completed', true);
+            },
+            onComplete: () {
+              Navigator.of(context).pushReplacement(
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const ReadyScreen(),
+                  transitionDuration: const Duration(milliseconds: 250),
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  }
+                ),
+              );
+            },
+          ),
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (!mounted) return;
+
       setState(() {
         _isSubmitting = false;
       });

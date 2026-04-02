@@ -234,7 +234,7 @@ class _PlaceSuggestion {
 }
 
 class _BirthPlaceSearchSheet extends StatefulWidget {
-  const _BirthPlaceSearchSheet({super.key});
+  const _BirthPlaceSearchSheet();
 
   @override
   State<_BirthPlaceSearchSheet> createState() => _BirthPlaceSearchSheetState();

@@ -34,15 +34,15 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const SetupScreen(),
-          transitionsBuilder: (_, animation, __, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 1000),
-        ),
-      );
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const SetupScreen(),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
   }
 
   @override
@@ -52,10 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image(
-              image: _splashBg,
-              fit: BoxFit.cover,
-            ),
+            child: Image(image: _splashBg, fit: BoxFit.cover),
           ),
         ],
       ),

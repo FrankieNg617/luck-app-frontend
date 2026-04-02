@@ -7,11 +7,7 @@ class ReadyBackground extends StatefulWidget {
   final Widget? child;
   final ValueNotifier<bool> hideHintText;
 
-  const ReadyBackground({
-    super.key,
-    this.child,
-    required this.hideHintText,
-  });
+  const ReadyBackground({super.key, this.child, required this.hideHintText});
 
   @override
   State<ReadyBackground> createState() => _ReadyBackgroundState();
@@ -22,17 +18,9 @@ class _ReadyBackgroundState extends State<ReadyBackground>
   late final AnimationController _controller;
   late final List<_Star> _stars;
 
-  // ✅ precache flag
-  bool _bgReady = false;
-
-  // ✅ keep provider so precache uses same key
-  late final AssetImage _bgProvider;
-
   @override
   void initState() {
     super.initState();
-
-    _bgProvider = const AssetImage('assets/backgrounds/ready_background.png');
 
     _controller = AnimationController(
       vsync: this,
@@ -41,19 +29,6 @@ class _ReadyBackgroundState extends State<ReadyBackground>
 
     final rng = math.Random();
     _stars = List.generate(150, (_) => _Star.random(rng));
-  }
-
-  // ✅ Preload image BEFORE first visible frame for this widget
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    if (_bgReady) return;
-
-    precacheImage(_bgProvider, context).then((_) {
-      if (!mounted) return;
-      setState(() => _bgReady = true);
-    });
   }
 
   @override
@@ -79,77 +54,69 @@ class _ReadyBackgroundState extends State<ReadyBackground>
       fit: StackFit.expand,
       children: [
         // BG image
-        Image(
-          image: _bgProvider,
+        Image.asset(
+          'assets/backgrounds/ready_background.png',
           fit: BoxFit.cover,
           alignment: Alignment.center,
           filterQuality: FilterQuality.high,
         ),
 
-        // Only show animated overlays after the image is ready (prevents stars-only phase)
-        if (_bgReady) ...[
-          // ================= DOT STAR =================
-          IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                final elapsedMs =
-                    _controller.lastElapsedDuration?.inMilliseconds ?? 0;
-                final seconds = elapsedMs / 1000.0;
+        // ================= DOT STAR =================
+        IgnorePointer(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              final elapsedMs =
+                  _controller.lastElapsedDuration?.inMilliseconds ?? 0;
+              final seconds = elapsedMs / 1000.0;
 
-                return CustomPaint(
-                  painter: _StarPainter(
-                    stars: _stars,
-                    timeSeconds: seconds,
+              return CustomPaint(
+                painter: _StarPainter(stars: _stars, timeSeconds: seconds),
+              );
+            },
+          ),
+        ),
+
+        // ================= SHOOTING STAR =================
+        IgnorePointer(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              final seconds = _seconds();
+              return Stack(
+                children: [
+                  _ShootingStar(
+                    seconds: seconds,
+                    timeOffsetSeconds: 0.0,
+                    startXFactor: 1.20,
+                    startYFactor: 0.15,
+                    endXFactor: -0.70,
+                    endYFactor: 0.60,
+                    arcHeightFactor: 0.07,
+                    intensity: 0.65,
                   ),
-                );
-              },
-            ),
+                ],
+              );
+            },
           ),
+        ),
 
-          // ================= SHOOTING STAR =================
-          IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                final seconds = _seconds();
-                return Stack(
-                  children: [
-                    _ShootingStar(
-                      seconds: seconds,
-                      timeOffsetSeconds: 0.0,
-                      startXFactor: 1.20,
-                      startYFactor: 0.15,
-                      endXFactor: -0.70,
-                      endYFactor: 0.60,
-                      arcHeightFactor: 0.07,
-                      intensity: 0.65,
-                    ),
-                  ],
-                );
-              },
-            ),
+        // ================= HINT TEXT =================
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: bottomPadding,
+          child: ValueListenableBuilder<bool>(
+            valueListenable: widget.hideHintText,
+            builder: (context, hidden, _) {
+              return AnimatedOpacity(
+                duration: const Duration(milliseconds: 220),
+                opacity: hidden ? 0.0 : 1.0,
+                child: TypingHintText(username: p.username),
+              );
+            },
           ),
-
-          // ================= HINT TEXT =================
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: bottomPadding,
-            child: ValueListenableBuilder<bool>(
-              valueListenable: widget.hideHintText,
-              builder: (context, hidden, _) {
-                return AnimatedOpacity(
-                  duration: const Duration(milliseconds: 220),
-                  opacity: hidden ? 0.0 : 1.0,
-                  child: TypingHintText(
-                    username: p.username,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ],
     );
   }
@@ -192,10 +159,7 @@ class _StarPainter extends CustomPainter {
   final List<_Star> stars;
   final double timeSeconds;
 
-  _StarPainter({
-    required this.stars,
-    required this.timeSeconds,
-  });
+  _StarPainter({required this.stars, required this.timeSeconds});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -206,15 +170,19 @@ class _StarPainter extends CustomPainter {
       final tw = 0.55 + 0.45 * math.sin(timeSeconds * s.speed + s.phase);
       final opacity = tw.clamp(0.10, 1.0);
 
-      final corePaint =
-          Paint()..color = Colors.white.withValues(alpha: opacity);
+      final corePaint = Paint()
+        ..color = Colors.white.withValues(alpha: opacity);
 
       canvas.drawCircle(Offset(dx, dy), s.radius, corePaint);
 
       if (s.glow) {
         final glowPaint = Paint()
-          ..color = const Color.fromARGB(255, 165, 120, 241)
-              .withValues(alpha: 1.00 * opacity)
+          ..color = const Color.fromARGB(
+            255,
+            165,
+            120,
+            241,
+          ).withValues(alpha: 1.00 * opacity)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
 
         canvas.drawCircle(Offset(dx, dy), s.radius * 1.8, glowPaint);
@@ -429,10 +397,7 @@ class _TypingHintTextState extends State<TypingHintText>
       ..reset()
       ..duration = const Duration(milliseconds: 2000);
 
-    _fade = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
 
     setState(() {
       _showSecond = true;
@@ -494,7 +459,3 @@ class _TypingHintTextState extends State<TypingHintText>
     );
   }
 }
-
-
-
-
