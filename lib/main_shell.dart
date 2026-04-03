@@ -4,9 +4,15 @@ import '../screens/home_screen.dart';
 import '../screens/zodiac_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/love_calculator_screen.dart';
+import '../store/home_data_store.dart';
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  const MainShell({
+    super.key,
+    required this.homeDataStore,
+  });
+
+  final HomeDataStore homeDataStore;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -16,20 +22,18 @@ class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
   int _index = 0;
 
-  // Keep pages alive (no re-build / no scroll reset)
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    ZodiacScreen(),
-    LoveCalculatorScreen(),
-    ProfileScreen(),
+  late final List<Widget> _pages = [
+    HomeScreen(homeDataStore: widget.homeDataStore),
+    const ZodiacScreen(),
+    const LoveCalculatorScreen(),
+    const ProfileScreen(),
   ];
 
-  // Navigation bar colors per page
   final List<Color> _navColors = const [
-    Color.fromARGB(255, 29, 15, 59), // Home
-    Colors.black, // Zodiac
-    Color.fromARGB(255, 19, 17, 67), // Love Cal
-    Color.fromARGB(255, 31, 12, 49), // Profile
+    Color.fromARGB(255, 29, 15, 59),
+    Colors.black,
+    Color.fromARGB(255, 19, 17, 67),
+    Color.fromARGB(255, 31, 12, 49),
   ];
 
   late final AnimationController _popCtrl;
@@ -41,8 +45,8 @@ class _MainShellState extends State<MainShell>
       vsync: this,
       lowerBound: 0.0,
       upperBound: 1.0,
-      value: 1.0, // stable
-      duration: const Duration(milliseconds: 600), // fallback only
+      value: 1.0,
+      duration: const Duration(milliseconds: 600),
     );
   }
 
@@ -52,26 +56,22 @@ class _MainShellState extends State<MainShell>
     super.dispose();
   }
 
-  // ✅ iOS-like spring pop
   void _runSpringPop() {
     _popCtrl.stop();
-
-    // 0 = fully "popped" (bigger), 1 = settled (normal)
     _popCtrl.value = 0.0;
 
-    // iOS-ish spring feel:
-    // - lower stiffness => softer
-    // - higher damping => less bounce
-    const spring = SpringDescription(mass: 1.0, stiffness: 100.0, damping: 7.0);
+    const spring = SpringDescription(
+      mass: 1.0,
+      stiffness: 100.0,
+      damping: 7.0,
+    );
 
-    // Animate value from 0 -> 1 with spring physics
     final sim = SpringSimulation(spring, 0.0, 1.0, 8.0);
     _popCtrl.animateWith(sim);
   }
 
   void _onTap(int i) {
     if (i == _index) {
-      // Optional: re-pop when tapping the same tab
       _runSpringPop();
       return;
     }
@@ -86,8 +86,6 @@ class _MainShellState extends State<MainShell>
     final h = MediaQuery.of(context).size.height;
     final iconSize = (h * 0.02).clamp(22.0, 30.0);
 
-    // Pop amount (bigger when controller is near 0, settle at 1)
-    // maxPop: how much it scales up at the "pop" moment
     const maxPop = 0.005;
     final scaleAnim = _popCtrl.drive(
       Tween<double>(begin: 1.0 + maxPop, end: 1.0),

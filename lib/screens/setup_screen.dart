@@ -32,14 +32,15 @@ class _SetupScreenState extends State<SetupScreen> {
 
   bool _isSubmitting = false;
 
-  static const String _baseUrl = 'http://10.0.2.2:3000';
-  // emulator -> 10.0.2.2
-  // real phone -> change to your computer LAN IP like http://192.168.1.5:3000
+  static const String _emulatorUrl = 'http://10.0.2.2:3000';
+  static const String _phoneUrl = 'http://192.168.68.53:3000';
 
   @override
   void initState() {
     super.initState();
-    _readyScreenBg = const AssetImage('assets/backgrounds/ready_background.png');
+    _readyScreenBg = const AssetImage(
+      'assets/backgrounds/ready_background.png',
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await precacheImage(_readyScreenBg, context);
     });
@@ -121,37 +122,48 @@ class _SetupScreenState extends State<SetupScreen> {
                 'lon': _selectedBirthPlace!.lon,
               };
 
-              final response = await http.post(
-                Uri.parse('$_baseUrl/api/users'),
-                headers: {'Content-Type': 'application/json'},
-                body: jsonEncode(payload),
-              );
+              final url = '$_phoneUrl/api/users';
 
-              final data = jsonDecode(response.body) as Map<String, dynamic>;
+              try {
+                final response = await http
+                    .post(
+                      Uri.parse(url),
+                      headers: {'Content-Type': 'application/json'},
+                      body: jsonEncode(payload),
+                    )
+                    .timeout(const Duration(seconds: 20));
 
-              if (response.statusCode < 200 || response.statusCode >= 300) {
-                throw Exception(
-                  data['message'] ?? 'Failed to create user profile.',
-                );
+                final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+                if (response.statusCode < 200 || response.statusCode >= 300) {
+                  throw Exception(
+                    data['message'] ?? 'Failed to create user profile.',
+                  );
+                }
+
+                final userId = (data['userId'] ?? '').toString();
+                if (userId.isEmpty) {
+                  throw Exception('Backend did not return userId.');
+                }
+
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('user_id', userId);
+                await prefs.setBool('setup_completed', true);
+
+              } catch (e, stack) {
+                debugPrintStack(stackTrace: stack);
+                rethrow;
               }
-
-              final userId = (data['userId'] ?? '').toString();
-              if (userId.isEmpty) {
-                throw Exception('Backend did not return userId.');
-              }
-
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('user_id', userId);
-              await prefs.setBool('setup_completed', true);
             },
             onComplete: () {
               Navigator.of(context).pushReplacement(
                 PageRouteBuilder(
                   pageBuilder: (_, __, ___) => const ReadyScreen(),
                   transitionDuration: const Duration(milliseconds: 250),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(opacity: animation, child: child);
-                  }
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
                 ),
               );
             },
@@ -230,6 +242,7 @@ class _SetupScreenState extends State<SetupScreen> {
     final spacingSmall = height * 0.01;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.black,
       body: Stack(
         children: [
@@ -347,7 +360,14 @@ class _SetupScreenState extends State<SetupScreen> {
                       }) {
                         _selectedBirthPlace = place;
                       },
-                  onContinue: _goToNextStep,
+                  onContinue: () async {
+                    final place = _selectedBirthPlace;
+                    if (place == null) return;
+
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('birth_tz', place.timeZoneId);
+                    _goToNextStep();
+                  },
                 ),
                 SetupStep.username => SetupUsernameWidget(
                   key: const ValueKey('username'),

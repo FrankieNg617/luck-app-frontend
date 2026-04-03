@@ -3,6 +3,8 @@ import 'package:luck_app/controllers/iris_controller.dart';
 import 'package:luck_app/main_shell.dart';
 import '../background/ready_background.dart';
 import '../background/home_background.dart';
+import '../services/home_daily_service.dart';
+import '../store/home_data_store.dart';
 
 class ReadyScreen extends StatefulWidget {
   const ReadyScreen({super.key});
@@ -13,16 +15,23 @@ class ReadyScreen extends StatefulWidget {
 
 class _ReadyScreenState extends State<ReadyScreen>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
+  static const String _emulatorUrl = 'http://10.0.2.2:3000'; // emulator
+  static const String _phoneUrl = 'http://192.168.68.53:3000'; // phone
 
+  late final AnimationController _ctrl;
   late final Animation<double> _zoom;
   late final Animation<double> _homeFadeIn;
 
+  final HomeDailyService _homeDailyService = HomeDailyService(
+    baseUrl: _phoneUrl,
+  );
+
   bool _locked = false;
   bool _irisClosed = false;
+  bool _isPreloading = false;
+
   static const double _irisCloseAt = 0.35;
 
-  final Widget _home = const MainShell();
   final ValueNotifier<bool> hideHintText = ValueNotifier(false);
 
   @override
@@ -39,30 +48,18 @@ class _ReadyScreenState extends State<ReadyScreen>
       end: 6.0,
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInCubic));
 
-    // ✅ Start fading Home in near the end of the zoom
     _homeFadeIn = CurvedAnimation(
       parent: _ctrl,
       curve: const Interval(0.90, 1.0, curve: Curves.easeOut),
     );
 
-    Future<void> handleZoomFinished() async {
-      await Future.delayed(const Duration(milliseconds: 120));
-      
-      if (!mounted) return;
-      _swapToHomeInstant();
-
-      await Future.delayed(const Duration(milliseconds: 80));
-      IrisController.open(); // reopen into vignette
-    }
-
     _ctrl.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        handleZoomFinished();
+        _handleAnimationFinished();
       }
     });
 
     _ctrl.addListener(() {
-      // start iris close near end of zoom
       if (!_irisClosed && _ctrl.value >= _irisCloseAt) {
         _irisClosed = true;
         IrisController.close();
@@ -81,20 +78,49 @@ class _ReadyScreenState extends State<ReadyScreen>
     if (_locked) return;
     _locked = true;
 
-    // hide hint text
     hideHintText.value = true;
-
-    //VignetteController.opacity.value = 1.0;
     _ctrl.forward(from: 0.0);
   }
 
-  void _swapToHomeInstant() {
-    // Instant swap so there's NO "big zoomed ready screen pause"
+  Future<void> _handleAnimationFinished() async {
+    if (_isPreloading) return;
+    _isPreloading = true;
+
+    try {
+      final store = HomeDataStore();
+      store.setLoading(true);
+
+      final data = await _homeDailyService.loadHomeData();
+      store.setData(data);
+
+      if (!mounted) return;
+
+      await Future.delayed(const Duration(milliseconds: 120));
+      if (!mounted) return;
+
+      _swapToHomeInstant(store);
+
+      await Future.delayed(const Duration(milliseconds: 80));
+      IrisController.open();
+    } catch (e) {
+      final store = HomeDataStore();
+      store.setError(e.toString());
+
+      if (!mounted) return;
+
+      _swapToHomeInstant(store);
+
+      await Future.delayed(const Duration(milliseconds: 80));
+      IrisController.open();
+    }
+  }
+
+  void _swapToHomeInstant(HomeDataStore homeDataStore) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: Duration.zero,
         reverseTransitionDuration: Duration.zero,
-        pageBuilder: (_, __, ___) => _home,
+        pageBuilder: (_, __, ___) => MainShell(homeDataStore: homeDataStore),
       ),
     );
   }
@@ -102,7 +128,7 @@ class _ReadyScreenState extends State<ReadyScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // prevents white flash
+      backgroundColor: Colors.black,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _onTap,
@@ -112,17 +138,11 @@ class _ReadyScreenState extends State<ReadyScreen>
             return Stack(
               fit: StackFit.expand,
               children: [
-                // ✅ Ready background zooms in
                 Transform.scale(
                   scale: _zoom.value,
-                  alignment: Alignment(
-                    0.15,
-                    0.12,
-                  ), // <-- zoom destination (focal point)
+                  alignment: const Alignment(0.15, 0.12),
                   child: ReadyBackground(hideHintText: hideHintText),
                 ),
-
-                // ✅ Home fades in during the end of zoom (smooth handoff)
                 IgnorePointer(
                   child: Opacity(
                     opacity: _homeFadeIn.value.clamp(0.0, 1.0),
