@@ -5,9 +5,13 @@ import '../background/ready_background.dart';
 import '../background/home_background.dart';
 import '../services/home_daily_service.dart';
 import '../store/home_data_store.dart';
+import '../services/profile_data_service.dart';
+import '../store/profile_data_store.dart';
 
 class ReadyScreen extends StatefulWidget {
-  const ReadyScreen({super.key});
+  const ReadyScreen({super.key, required this.username});
+
+  final String username;
 
   @override
   State<ReadyScreen> createState() => _ReadyScreenState();
@@ -23,7 +27,11 @@ class _ReadyScreenState extends State<ReadyScreen>
   late final Animation<double> _homeFadeIn;
 
   final HomeDailyService _homeDailyService = HomeDailyService(
-    baseUrl: _phoneUrl,
+    baseUrl: _emulatorUrl,
+  );
+
+  final ProfileDataService _profileDataService = ProfileDataService(
+    baseUrl: _emulatorUrl,
   );
 
   bool _locked = false;
@@ -86,41 +94,52 @@ class _ReadyScreenState extends State<ReadyScreen>
     if (_isPreloading) return;
     _isPreloading = true;
 
-    try {
-      final store = HomeDataStore();
-      store.setLoading(true);
+    final homeStore = HomeDataStore();
+    final profileStore = ProfileDataStore();
 
-      final data = await _homeDailyService.loadHomeData();
-      store.setData(data);
+    homeStore.setLoading(true);
+    profileStore.setLoading(true);
+
+    try {
+      final data = await Future.wait([
+        _homeDailyService.loadHomeData(),
+        _profileDataService.loadProfileData(),
+      ]);
+
+      final homeData = data[0];
+      final profileData = data[1];
+
+      homeStore.setData(homeData as dynamic);
+      profileStore.setData(profileData as dynamic);
 
       if (!mounted) return;
 
       await Future.delayed(const Duration(milliseconds: 120));
       if (!mounted) return;
 
-      _swapToHomeInstant(store);
+      _swapToHomeInstant(homeStore, profileStore);
 
       await Future.delayed(const Duration(milliseconds: 80));
       IrisController.open();
     } catch (e) {
-      final store = HomeDataStore();
-      store.setError(e.toString());
+      homeStore.setError(e.toString());
+      profileStore.setError(e.toString());
 
       if (!mounted) return;
 
-      _swapToHomeInstant(store);
+      _swapToHomeInstant(homeStore, profileStore);
 
       await Future.delayed(const Duration(milliseconds: 80));
       IrisController.open();
     }
   }
 
-  void _swapToHomeInstant(HomeDataStore homeDataStore) {
+  void _swapToHomeInstant(HomeDataStore homeDataStore, ProfileDataStore profileDataStore) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: Duration.zero,
         reverseTransitionDuration: Duration.zero,
-        pageBuilder: (_, __, ___) => MainShell(homeDataStore: homeDataStore),
+        pageBuilder: (_, __, ___) => MainShell(homeDataStore: homeDataStore, profileDataStore: profileDataStore),
       ),
     );
   }
@@ -141,7 +160,10 @@ class _ReadyScreenState extends State<ReadyScreen>
                 Transform.scale(
                   scale: _zoom.value,
                   alignment: const Alignment(0.15, 0.12),
-                  child: ReadyBackground(hideHintText: hideHintText),
+                  child: ReadyBackground(
+                    hideHintText: hideHintText,
+                    username: widget.username,
+                  ),
                 ),
                 IgnorePointer(
                   child: Opacity(

@@ -122,7 +122,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 'lon': _selectedBirthPlace!.lon,
               };
 
-              final url = '$_phoneUrl/api/users';
+              final url = '$_emulatorUrl/api/users';
 
               try {
                 final response = await http
@@ -158,7 +158,7 @@ class _SetupScreenState extends State<SetupScreen> {
             onComplete: () {
               Navigator.of(context).pushReplacement(
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const ReadyScreen(),
+                  pageBuilder: (_, __, ___) => ReadyScreen(username: _selectedUsername.trim()),
                   transitionDuration: const Duration(milliseconds: 250),
                   transitionsBuilder:
                       (context, animation, secondaryAnimation, child) {

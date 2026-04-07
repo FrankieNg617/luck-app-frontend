@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../user/user_profile.dart';
 import '../../routes/threads_sheet_route.dart';
 import '../../screens/info_edit_screen.dart';
 import '../../utils/date_format.dart';
+import '../../screens/profile_edit_screen.dart';
 
 class ProfileEditSection extends StatelessWidget {
   const ProfileEditSection({
-    super.key, 
-    required this.profile, 
-    required this.onValueChanged
+    super.key,
+    required this.profile,
+    required this.onValueChanged,
   });
 
-  final UserProfile profile;
+  final UserProfileEditView profile;
   final void Function(String title, String newValue) onValueChanged;
 
   @override
@@ -23,12 +23,43 @@ class ProfileEditSection extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Column(
         children: [
-          _EditField(title: "Name", value: profile.username, height: w * 0.004, onValueChanged: onValueChanged,),
-          _EditField(title: "Gender", value: profile.gender, height: w * 0.004, onValueChanged: onValueChanged,),
-          _EditField(title: "Birthday", value: profile.birthday, height: w * 0.0045, onValueChanged: onValueChanged,),
-          _EditField(title: "Zodiac sign", value: profile.zodiacSign, height: w * 0.005, tappable: false, onValueChanged: onValueChanged,),
-          _EditField(title: "Birth time", value: profile.birthTime, height: w * 0.0046, onValueChanged: onValueChanged,),
-          _EditField(title: "Birth place", value: profile.birthPlace, height: w * 0.0045, onValueChanged: onValueChanged,),
+          _EditField(
+            title: 'Name',
+            value: profile.username,
+            height: w * 0.004,
+            onValueChanged: onValueChanged,
+          ),
+          _EditField(
+            title: 'Gender',
+            value: profile.gender,
+            height: w * 0.004,
+            onValueChanged: onValueChanged,
+          ),
+          _EditField(
+            title: 'Birthday',
+            value: profile.birthday,
+            height: w * 0.0045,
+            onValueChanged: onValueChanged,
+          ),
+          _EditField(
+            title: 'Zodiac sign',
+            value: profile.zodiac,
+            height: w * 0.005,
+            tappable: false,
+            onValueChanged: onValueChanged,
+          ),
+          _EditField(
+            title: 'Birth time',
+            value: profile.birthTime,
+            height: w * 0.0046,
+            onValueChanged: onValueChanged,
+          ),
+          _EditField(
+            title: 'Birth place',
+            value: profile.birthPlace,
+            height: w * 0.0045,
+            onValueChanged: onValueChanged,
+          ),
         ],
       ),
     );
@@ -76,7 +107,7 @@ class _EditField extends StatelessWidget {
 
     final titleSize = (w * 0.034).clamp(13.0, 15.0);
     final valueSize = (w * 0.041).clamp(16.0, 18.0);
-    
+
     return Padding(
       padding: EdgeInsets.only(bottom: fieldSpacing),
       child: Material(

@@ -138,7 +138,7 @@ class _SetupGenderWidgetState extends State<SetupGenderWidget> {
                     children: [
                       _GenderOptionCard(
                         label: 'Female',
-                        symbol: '♀',
+                        icon: Icons.female,
                         width: widget.cardWidth.clamp(120, 180),
                         height: widget.cardHeight.clamp(110, 150),
                         onTap: () => _handleSelect(_SelectedGender.female),
@@ -150,7 +150,7 @@ class _SetupGenderWidgetState extends State<SetupGenderWidget> {
                       SizedBox(width: width * 0.04),
                       _GenderOptionCard(
                         label: 'Male',
-                        symbol: '♂',
+                        icon: Icons.male,
                         width: widget.cardWidth.clamp(120, 180),
                         height: widget.cardHeight.clamp(110, 150),
                         onTap: () => _handleSelect(_SelectedGender.male),
@@ -174,7 +174,7 @@ class _SetupGenderWidgetState extends State<SetupGenderWidget> {
 class _GenderOptionCard extends StatelessWidget {
   const _GenderOptionCard({
     required this.label,
-    required this.symbol,
+    required this.icon,
     required this.width,
     required this.height,
     required this.onTap,
@@ -185,7 +185,7 @@ class _GenderOptionCard extends StatelessWidget {
   });
 
   final String label;
-  final String symbol;
+  final IconData icon;
   final double width;
   final double height;
   final VoidCallback onTap;
@@ -214,7 +214,7 @@ class _GenderOptionCard extends StatelessWidget {
                   : Colors.white.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(18),
               border: isSelected
-                  ? null 
+                  ? null
                   : Border.all(
                       color: Colors.white.withValues(alpha: 0.08),
                       width: 1,
@@ -239,7 +239,11 @@ class _GenderOptionCard extends StatelessWidget {
                 fontWeight: FontWeight.w400,
                 height: 1,
               ),
-              child: Text(symbol),
+              child: Icon(
+                icon,
+                size: iconFontSize,
+                color: Colors.white.withValues(alpha: isSelected ? 1 : 0.92),
+              ),
             ),
           ),
           SizedBox(height: widthScreen * 0.03),

@@ -1,24 +1,29 @@
-import 'package:flutter/material.dart';
-import '../user/profile_scope.dart';
 import 'dart:io';
-import '../user/user_profile.dart';
-import '../widgets/Profile/profile_edit_section.dart';
+
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:image_compress_plus/image_compress_plus.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:image_compress_plus/image_compress_plus.dart';
+
+import '../store/profile_data_store.dart';
+import '../widgets/Profile/profile_edit_section.dart';
 
 class ProfileEditScreen extends StatefulWidget {
-  const ProfileEditScreen({super.key});
+  const ProfileEditScreen({
+    super.key,
+    required this.profileDataStore,
+  });
+
+  final ProfileDataStore profileDataStore;
 
   @override
   State<ProfileEditScreen> createState() => _ProfileEditScreenState();
 }
 
 class _ProfileEditScreenState extends State<ProfileEditScreen> {
-  UserProfile? _editedProfile;
   bool _isSaving = false;
   bool _isPickingAvatar = false;
 
@@ -31,45 +36,83 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _recoverLostAvatarPick();
   }
 
+  ProfileData get _profile => widget.profileDataStore.data!;
+
+  UserProfileEditView _viewFromStore(ProfileData p) {
+    return UserProfileEditView(
+      username: p.username,
+      gender: p.gender,
+      birthday: _formatBackendBirthdayToDisplay(p.birthDate),
+      birthTime: p.birthTime,
+      birthPlace: p.birthPlace,
+      zodiac: p.zodiac,
+      avatarPath: p.avatarPath,
+      avatarAsset: p.avatarAsset,
+    );
+  }
+
+  String _formatBackendBirthdayToDisplay(String value) {
+    try {
+      final date = DateTime.parse(value);
+      return DateFormat('dd MMMM yyyy').format(date);
+    } catch (_) {
+      return value;
+    }
+  }
+
+  String _formatDisplayBirthdayToBackend(String value) {
+    try {
+      final date = DateFormat('dd MMMM yyyy').parse(value);
+      return DateFormat('yyyy-MM-dd').format(date);
+    } catch (_) {
+      return value;
+    }
+  }
+
   void _handleValueChanged(String title, String newValue) {
-    if (_editedProfile == null) return;
+    final current = _profile;
 
-    setState(() {
-      switch (title) {
-        case 'Name':
-          _editedProfile = _editedProfile!.copyWith(username: newValue);
-          break;
-        case 'Gender':
-          final defaultAvatar = newValue.toLowerCase() == 'male'
-              ? 'assets/avatars/boy.png'
-              : 'assets/avatars/woman.png';
+    switch (title) {
+      case 'Name':
+        widget.profileDataStore.updateProfile(
+          current.copyWith(username: newValue),
+        );
+        break;
 
-          _editedProfile = _editedProfile!.copyWith(
-            gender: newValue,
-            avatarAsset: defaultAvatar,
-          );
-          break;
-        case 'Birthday':
-          final zodiac = _getZodiacSign(newValue);
-          _editedProfile = _editedProfile!.copyWith(
-            birthday: newValue,
-            zodiacSign: zodiac,
-          );
-          break;
-        case 'Birth time':
-          _editedProfile = _editedProfile!.copyWith(birthTime: newValue);
-          break;
-        case 'Birth place':
-          _editedProfile = _editedProfile!.copyWith(birthPlace: newValue);
-          break;
-      }
-    });
+      case 'Gender':
+        widget.profileDataStore.updateProfile(
+          current.copyWith(gender: newValue),
+        );
+        break;
+
+      case 'Birthday':
+        widget.profileDataStore.updateProfile(
+          current.copyWith(
+            birthDate: _formatDisplayBirthdayToBackend(newValue),
+            zodiac: _getZodiacSign(newValue),
+          ),
+        );
+        break;
+
+      case 'Birth time':
+        widget.profileDataStore.updateProfile(
+          current.copyWith(birthTime: newValue),
+        );
+        break;
+
+      case 'Birth place':
+        widget.profileDataStore.updateProfile(
+          current.copyWith(birthPlace: newValue),
+        );
+        break;
+    }
+
+    setState(() {});
   }
 
   String _getZodiacSign(String birthday) {
     try {
       final date = DateFormat('dd MMMM yyyy').parse(birthday);
-
       final day = date.day;
       final month = date.month;
 
@@ -99,7 +142,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         return 'Pisces';
       }
     } catch (_) {
-      return _editedProfile?.zodiacSign ?? '';
+      return _profile.zodiac;
     }
   }
 
@@ -121,6 +164,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       setState(() {
         _selectedAvatarFile = File(file.path);
       });
+
+      widget.profileDataStore.updateAvatarPath(file.path);
     } catch (_) {
       if (!mounted) return;
       _showError('Could not restore the selected photo.');
@@ -128,19 +173,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (_isSaving || _editedProfile == null) return;
-
-    final store = ProfileScope.of(context);
+    if (_isSaving) return;
 
     setState(() {
       _isSaving = true;
     });
 
     try {
-      await Future.wait([
-        store.update(_editedProfile!), // actual save
-        Future.delayed(const Duration(seconds: 2)), // minimum loading time
-      ]);
+      await Future.delayed(const Duration(seconds: 2));
 
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -310,10 +350,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
       setState(() {
         _selectedAvatarFile = compressed;
-        _editedProfile = _editedProfile?.copyWith(avatarPath: compressed.path);
         _isPickingAvatar = false;
       });
-    } catch (e) {
+
+      widget.profileDataStore.updateAvatarPath(compressed.path);
+    } catch (_) {
       if (!mounted) return;
 
       setState(() {
@@ -369,8 +410,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   void _removeCurrentPicture() {
     setState(() {
       _selectedAvatarFile = null;
-      _editedProfile = _editedProfile?.copyWith(clearAvatarPath: true);
     });
+    widget.profileDataStore.updateAvatarPath(null);
   }
 
   void _showError(String message) {
@@ -415,16 +456,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final store = ProfileScope.of(context);
-    _editedProfile ??= store.profile;
-    final p = _editedProfile!;
+    final p = _profile;
+    final view = _viewFromStore(p);
 
     final route = ModalRoute.of(context);
     final anim = route?.secondaryAnimation ?? kAlwaysDismissedAnimation;
 
     final w = MediaQuery.of(context).size.width;
 
-    ImageProvider _buildAvatarProvider(UserProfile p) {
+    ImageProvider buildAvatarProvider(ProfileData p) {
       if (_selectedAvatarFile != null) {
         return FileImage(_selectedAvatarFile!);
       }
@@ -440,7 +480,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       return AssetImage(p.avatarAsset);
     }
 
-    final avatarProvider = _buildAvatarProvider(p);
+    final avatarProvider = buildAvatarProvider(p);
 
     return AnimatedBuilder(
       animation: anim,
@@ -486,7 +526,6 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     Column(
                       children: [
                         const SizedBox(height: 4),
-
                         SizedBox(
                           height: (w * 0.11).clamp(48.0, 56.0),
                           child: Stack(
@@ -535,7 +574,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: Padding(
-                                  padding: EdgeInsets.only(right: (w * 0.005).clamp(6.0, 14.0)),
+                                  padding: EdgeInsets.only(
+                                    right: (w * 0.005).clamp(6.0, 14.0),
+                                  ),
                                   child: AnimatedSwitcher(
                                     duration: const Duration(milliseconds: 180),
                                     child: _isSaving
@@ -592,13 +633,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                             ],
                           ),
                         ),
-
                         Divider(
                           height: 1,
                           thickness: 0.7,
                           color: Colors.black.withValues(alpha: 0.65),
                         ),
-
                         Expanded(
                           child: SingleChildScrollView(
                             keyboardDismissBehavior:
@@ -647,11 +686,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                     ),
                                   ),
                                 ),
-
                                 const SizedBox(height: 45),
-
                                 ProfileEditSection(
-                                  profile: p,
+                                  profile: view,
                                   onValueChanged: _handleValueChanged,
                                 ),
                               ],
@@ -660,7 +697,6 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         ),
                       ],
                     ),
-
                     if (_isSaving)
                       Positioned.fill(
                         child: Container(
@@ -719,4 +755,26 @@ class _BottomSheetActionRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class UserProfileEditView {
+  const UserProfileEditView({
+    required this.username,
+    required this.gender,
+    required this.birthday,
+    required this.birthTime,
+    required this.birthPlace,
+    required this.zodiac,
+    required this.avatarPath,
+    required this.avatarAsset,
+  });
+
+  final String username;
+  final String gender;
+  final String birthday;
+  final String birthTime;
+  final String birthPlace;
+  final String zodiac;
+  final String? avatarPath;
+  final String avatarAsset;
 }

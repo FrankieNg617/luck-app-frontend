@@ -6,8 +6,9 @@ import '../user/profile_scope.dart';
 class ReadyBackground extends StatefulWidget {
   final Widget? child;
   final ValueNotifier<bool> hideHintText;
+  final String username;
 
-  const ReadyBackground({super.key, this.child, required this.hideHintText});
+  const ReadyBackground({super.key, this.child, required this.hideHintText, required this.username});
 
   @override
   State<ReadyBackground> createState() => _ReadyBackgroundState();
@@ -46,9 +47,6 @@ class _ReadyBackgroundState extends State<ReadyBackground>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final bottomPadding = (size.height * 0.08).clamp(28.0, 56.0);
-
-    final store = ProfileScope.of(context);
-    final p = store.profile;
 
     return Stack(
       fit: StackFit.expand,
@@ -112,7 +110,7 @@ class _ReadyBackgroundState extends State<ReadyBackground>
               return AnimatedOpacity(
                 duration: const Duration(milliseconds: 220),
                 opacity: hidden ? 0.0 : 1.0,
-                child: TypingHintText(username: p.username),
+                child: TypingHintText(username: widget.username),
               );
             },
           ),
@@ -326,8 +324,8 @@ class _MeteorStreak extends StatelessWidget {
 /* --------------------------- HINT TEXT --------------------------- */
 
 class TypingHintText extends StatefulWidget {
-  final String username;
   final Duration initialDelay;
+  final String username;
 
   const TypingHintText({
     super.key,

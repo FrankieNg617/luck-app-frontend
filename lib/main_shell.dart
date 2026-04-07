@@ -5,14 +5,17 @@ import '../screens/zodiac_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/love_calculator_screen.dart';
 import '../store/home_data_store.dart';
+import '../store/profile_data_store.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({
     super.key,
     required this.homeDataStore,
+    required this.profileDataStore,
   });
 
   final HomeDataStore homeDataStore;
+  final ProfileDataStore profileDataStore;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -26,7 +29,7 @@ class _MainShellState extends State<MainShell>
     HomeScreen(homeDataStore: widget.homeDataStore),
     const ZodiacScreen(),
     const LoveCalculatorScreen(),
-    const ProfileScreen(),
+    ProfileScreen(profileDataStore: widget.profileDataStore),
   ];
 
   final List<Color> _navColors = const [

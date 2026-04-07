@@ -98,16 +98,10 @@ class HomeDailyService {
     final savedCurrentTz = prefs.getString('current_tz');
     final savedBirthTz = prefs.getString('birth_tz');
 
-    debugPrint('--- TZ DEBUG START ---');
-    debugPrint('saved current_tz = $savedCurrentTz');
-    debugPrint('saved birth_tz = $savedBirthTz');
-
     String deviceTz;
     try {
       deviceTz = await FlutterTimezone.getLocalTimezone();
-      debugPrint('deviceTz from plugin = $deviceTz');
     } catch (e) {
-      debugPrint('ERROR getting timezone: $e');
       deviceTz = savedCurrentTz ?? savedBirthTz ?? 'Asia/Tokyo';
     }
 
@@ -115,7 +109,6 @@ class HomeDailyService {
       await prefs.setString('current_tz', deviceTz);
     }
 
-    debugPrint('FINAL tz used = $deviceTz');
     return deviceTz;
   }
 

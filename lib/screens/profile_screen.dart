@@ -1,14 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../background/profile_background.dart';
-import '../user/profile_scope.dart';
 import '../routes/threads_sheet_route.dart';
 import 'profile_edit_screen.dart';
 import '../utils/date_format.dart';
 import 'settings_screen.dart';
+import '../store/profile_data_store.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, required this.profileDataStore});
+
+  final ProfileDataStore profileDataStore;
 
   String _planetForSign(String sign) {
     final s = sign.trim().toLowerCase();
@@ -29,8 +31,8 @@ class ProfileScreen extends StatelessWidget {
     return map[s] ?? 'sun';
   }
 
-  ImageProvider _buildAvatarProvider(dynamic p) {
-    final avatarPath = p.avatarPath;
+  ImageProvider _buildAvatarProvider(ProfileData data) {
+    final avatarPath = data.avatarPath;
 
     if (avatarPath != null && avatarPath.isNotEmpty) {
       final file = File(avatarPath);
@@ -39,13 +41,12 @@ class ProfileScreen extends StatelessWidget {
       }
     }
 
-    return AssetImage(p.avatarAsset);
+    return AssetImage(data.avatarAsset);
   }
 
   @override
   Widget build(BuildContext context) {
-    final store = ProfileScope.of(context);
-    final p = store.profile;
+    final data = profileDataStore.data!;
     final route = ModalRoute.of(context);
 
     final anim = route?.secondaryAnimation ?? kAlwaysDismissedAnimation;
@@ -53,16 +54,16 @@ class ProfileScreen extends StatelessWidget {
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 
-    final planet = _planetForSign(p.zodiacSign);
+    final planet = _planetForSign(data.zodiac);
     final avatarSize = (w * 0.24).clamp(84.0, 130.0);
     final planetBox = (w * 0.67).clamp(220.0, 360.0);
     final planetSize = (planetBox * 0.60).clamp(140.0, 240.0);
 
     final zodiacSymbolPath =
-        'assets/zodiac_symbols/${p.zodiacSign.trim().toLowerCase()}.png';
+        'assets/zodiac_symbols/${data.zodiac.trim().toLowerCase()}.png';
     final planetPath = 'assets/planets/${planet.toLowerCase()}.png';
 
-    final avatarProvider = _buildAvatarProvider(p);
+    final avatarProvider = _buildAvatarProvider(data);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -137,7 +138,7 @@ class ProfileScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            p.username,
+                            data.username,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: (w * 0.055).clamp(18.0, 24.0),
@@ -163,7 +164,7 @@ class ProfileScreen extends StatelessWidget {
 
                       // Zodiac sign + planet label
                       Text(
-                        '${p.zodiacSign} - ${_titleCase(planet)}',
+                        '${data.zodiac} - ${_titleCase(planet)}',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.92),
                           fontSize: (w * 0.045).clamp(15.0, 20.0),
@@ -212,7 +213,7 @@ class ProfileScreen extends StatelessWidget {
                           onPressed: () {
                             Navigator.of(context).push(
                               ThreadsSheetRoute(
-                                builder: (_) => const ProfileEditScreen(),
+                                builder: (_) => ProfileEditScreen(profileDataStore: profileDataStore),
                               ),
                             );
                           },
@@ -253,7 +254,7 @@ class ProfileScreen extends StatelessWidget {
                               right: 0,
                               child: _InfoBadge(
                                 icon: Icons.cake_rounded,
-                                label: formatBirthdayShort(p.birthday),
+                                label: formatBirthdayShort(data.birthDate),
                               ),
                             ),
 
@@ -263,7 +264,7 @@ class ProfileScreen extends StatelessWidget {
                               top: planetBox * 0.40,
                               child: _InfoBadge(
                                 icon: Icons.access_time_rounded,
-                                label: p.birthTime,
+                                label: data.birthTime,
                               ),
                             ),
 
@@ -272,10 +273,10 @@ class ProfileScreen extends StatelessWidget {
                               left: 0,
                               top: planetBox * 0.40,
                               child: _InfoBadge(
-                                icon: p.gender.toLowerCase() == 'male'
+                                icon: data.gender.toLowerCase() == 'male'
                                     ? Icons.male
                                     : Icons.female,
-                                label: p.gender,
+                                label: data.gender,
                               ),
                             ),
 
@@ -286,7 +287,7 @@ class ProfileScreen extends StatelessWidget {
                               right: 0,
                               child: _InfoBadge(
                                 icon: Icons.place_rounded,
-                                label: p.birthPlace,
+                                label: data.birthPlace,
                               ),
                             ),
                           ],
