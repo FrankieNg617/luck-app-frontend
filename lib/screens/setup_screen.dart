@@ -8,6 +8,7 @@ import '../widgets/Setup/setup_birthday_widget.dart';
 import '../widgets/Setup/setup_birth_time_widget.dart';
 import '../widgets/Setup/setup_birth_place_widget.dart';
 import '../widgets/Setup/setup_username_widget.dart';
+import '../config/app_config.dart';
 import 'onboarding_screen.dart';
 import 'ready_screen.dart';
 
@@ -32,8 +33,7 @@ class _SetupScreenState extends State<SetupScreen> {
 
   bool _isSubmitting = false;
 
-  static const String _emulatorUrl = 'http://10.0.2.2:3000';
-  static const String _phoneUrl = 'http://192.168.68.53:3000';
+  final String _baseUrl = AppConfig.baseUrl;
 
   @override
   void initState() {
@@ -122,7 +122,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 'lon': _selectedBirthPlace!.lon,
               };
 
-              final url = '$_emulatorUrl/api/users';
+              final url = '$_baseUrl/api/users';
 
               try {
                 final response = await http

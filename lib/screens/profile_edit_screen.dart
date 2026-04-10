@@ -1,23 +1,30 @@
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_compress_plus/image_compress_plus.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:luck_app/services/home_daily_service.dart';
+import 'package:luck_app/store/home_data_store.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../config/app_config.dart';
+import '../services/profile_data_service.dart';
 import '../store/profile_data_store.dart';
+import '../store/home_data_store.dart';
+import '../widgets/Profile/birth_place_edit_widget.dart';
 import '../widgets/Profile/profile_edit_section.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({
     super.key,
     required this.profileDataStore,
+    required this.homeDataStore,
   });
 
   final ProfileDataStore profileDataStore;
+  final HomeDataStore homeDataStore;
 
   @override
   State<ProfileEditScreen> createState() => _ProfileEditScreenState();
@@ -30,15 +37,20 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _selectedAvatarFile;
 
+  late final ProfileDataService _profileDataService;
+  late final HomeDailyService _homeDailyService;
+  late ProfileData _draftProfile;
+
   @override
   void initState() {
     super.initState();
+    _profileDataService = ProfileDataService(baseUrl: AppConfig.baseUrl);
+    _homeDailyService = HomeDailyService(baseUrl: AppConfig.baseUrl);
+    _draftProfile = widget.profileDataStore.data!;
     _recoverLostAvatarPick();
   }
 
-  ProfileData get _profile => widget.profileDataStore.data!;
-
-  UserProfileEditView _viewFromStore(ProfileData p) {
+  UserProfileEditView _viewFromDraft(ProfileData p) {
     return UserProfileEditView(
       username: p.username,
       gender: p.gender,
@@ -69,40 +81,35 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
   }
 
-  void _handleValueChanged(String title, String newValue) {
-    final current = _profile;
-
+  void _handleValueChanged(String title, dynamic newValue) {
     switch (title) {
       case 'Name':
-        widget.profileDataStore.updateProfile(
-          current.copyWith(username: newValue),
-        );
+        _draftProfile = _draftProfile.copyWith(username: newValue as String);
         break;
 
       case 'Gender':
-        widget.profileDataStore.updateProfile(
-          current.copyWith(gender: newValue),
-        );
+        _draftProfile = _draftProfile.copyWith(gender: newValue as String);
         break;
 
       case 'Birthday':
-        widget.profileDataStore.updateProfile(
-          current.copyWith(
-            birthDate: _formatDisplayBirthdayToBackend(newValue),
-            zodiac: _getZodiacSign(newValue),
-          ),
+        final birthday = newValue as String;
+        _draftProfile = _draftProfile.copyWith(
+          birthDate: _formatDisplayBirthdayToBackend(birthday),
+          zodiac: _getZodiacSign(birthday),
         );
         break;
 
       case 'Birth time':
-        widget.profileDataStore.updateProfile(
-          current.copyWith(birthTime: newValue),
-        );
+        _draftProfile = _draftProfile.copyWith(birthTime: newValue as String);
         break;
 
       case 'Birth place':
-        widget.profileDataStore.updateProfile(
-          current.copyWith(birthPlace: newValue),
+        final place = newValue as BirthPlaceEditSelection;
+        _draftProfile = _draftProfile.copyWith(
+          birthPlace: place.cityName,
+          birthTz: place.timeZoneId,
+          lat: place.lat,
+          lon: place.lon,
         );
         break;
     }
@@ -142,7 +149,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         return 'Pisces';
       }
     } catch (_) {
-      return _profile.zodiac;
+      return _draftProfile.zodiac;
     }
   }
 
@@ -163,9 +170,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
       setState(() {
         _selectedAvatarFile = File(file.path);
+        _draftProfile = _draftProfile.copyWith(avatarPath: file.path);
       });
-
-      widget.profileDataStore.updateAvatarPath(file.path);
     } catch (_) {
       if (!mounted) return;
       _showError('Could not restore the selected photo.');
@@ -180,11 +186,18 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     });
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      final updated = await _profileDataService.updateProfile(_draftProfile);
+
+      widget.profileDataStore.setData(
+        updated.copyWith(avatarPath: _draftProfile.avatarPath),
+      );
+
+      final refreshedHomeData = await _homeDailyService.fetchAndCacheToday();
+      widget.homeDataStore.setData(refreshedHomeData);
 
       if (!mounted) return;
       Navigator.of(context).pop();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -193,7 +206,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to save profile')));
+      ).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
     }
   }
 
@@ -350,10 +363,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
       setState(() {
         _selectedAvatarFile = compressed;
+        _draftProfile = _draftProfile.copyWith(avatarPath: compressed.path);
         _isPickingAvatar = false;
       });
-
-      widget.profileDataStore.updateAvatarPath(compressed.path);
     } catch (_) {
       if (!mounted) return;
 
@@ -410,8 +422,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   void _removeCurrentPicture() {
     setState(() {
       _selectedAvatarFile = null;
+      _draftProfile = _draftProfile.copyWith(clearAvatarPath: true);
     });
-    widget.profileDataStore.updateAvatarPath(null);
   }
 
   void _showError(String message) {
@@ -456,8 +468,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = _profile;
-    final view = _viewFromStore(p);
+    final p = _draftProfile;
+    final view = _viewFromDraft(p);
 
     final route = ModalRoute.of(context);
     final anim = route?.secondaryAnimation ?? kAlwaysDismissedAnimation;

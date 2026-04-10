@@ -29,7 +29,7 @@ class _MainShellState extends State<MainShell>
     HomeScreen(homeDataStore: widget.homeDataStore),
     const ZodiacScreen(),
     const LoveCalculatorScreen(),
-    ProfileScreen(profileDataStore: widget.profileDataStore),
+    ProfileScreen(profileDataStore: widget.profileDataStore, homeDataStore: widget.homeDataStore,),
   ];
 
   final List<Color> _navColors = const [

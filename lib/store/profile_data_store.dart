@@ -8,6 +8,9 @@ class ProfileData {
     required this.birthDate,
     required this.birthTime,
     required this.birthPlace,
+    required this.birthTz,
+    required this.lat,
+    required this.lon,
     required this.zodiac,
     this.avatarPath,
   });
@@ -18,6 +21,9 @@ class ProfileData {
   final String birthDate;
   final String birthTime;
   final String birthPlace;
+  final String birthTz;
+  final double lat;
+  final double lon;
   final String zodiac;
   final String? avatarPath;
 
@@ -34,6 +40,9 @@ class ProfileData {
     String? birthDate,
     String? birthTime,
     String? birthPlace,
+    String? birthTz,
+    double? lat,
+    double? lon,
     String? zodiac,
     String? avatarPath,
     bool clearAvatarPath = false,
@@ -45,6 +54,9 @@ class ProfileData {
       birthDate: birthDate ?? this.birthDate,
       birthTime: birthTime ?? this.birthTime,
       birthPlace: birthPlace ?? this.birthPlace,
+      birthTz: birthTz ?? this.birthTz,
+      lat: lat ?? this.lat,
+      lon: lon ?? this.lon,
       zodiac: zodiac ?? this.zodiac,
       avatarPath: clearAvatarPath ? null : (avatarPath ?? this.avatarPath),
     );

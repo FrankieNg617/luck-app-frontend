@@ -7,6 +7,7 @@ import '../services/home_daily_service.dart';
 import '../store/home_data_store.dart';
 import '../services/profile_data_service.dart';
 import '../store/profile_data_store.dart';
+import '../config/app_config.dart';
 
 class ReadyScreen extends StatefulWidget {
   const ReadyScreen({super.key, required this.username});
@@ -19,19 +20,17 @@ class ReadyScreen extends StatefulWidget {
 
 class _ReadyScreenState extends State<ReadyScreen>
     with SingleTickerProviderStateMixin {
-  static const String _emulatorUrl = 'http://10.0.2.2:3000'; // emulator
-  static const String _phoneUrl = 'http://192.168.68.53:3000'; // phone
 
   late final AnimationController _ctrl;
   late final Animation<double> _zoom;
   late final Animation<double> _homeFadeIn;
 
   final HomeDailyService _homeDailyService = HomeDailyService(
-    baseUrl: _emulatorUrl,
+    baseUrl: AppConfig.baseUrl,
   );
 
   final ProfileDataService _profileDataService = ProfileDataService(
-    baseUrl: _emulatorUrl,
+    baseUrl: AppConfig.baseUrl,
   );
 
   bool _locked = false;

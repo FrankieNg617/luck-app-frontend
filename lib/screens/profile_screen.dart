@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:luck_app/store/home_data_store.dart';
 import '../background/profile_background.dart';
 import '../routes/threads_sheet_route.dart';
 import 'profile_edit_screen.dart';
@@ -8,9 +9,10 @@ import 'settings_screen.dart';
 import '../store/profile_data_store.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key, required this.profileDataStore});
+  const ProfileScreen({super.key, required this.profileDataStore, required this.homeDataStore});
 
   final ProfileDataStore profileDataStore;
+  final HomeDataStore homeDataStore;
 
   String _planetForSign(String sign) {
     final s = sign.trim().toLowerCase();
@@ -86,7 +88,7 @@ class ProfileScreen extends StatelessWidget {
               alignment: Alignment.topCenter,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(radius),
-                child: child
+                child: child,
               ),
             ),
           );
@@ -127,7 +129,10 @@ class ProfileScreen extends StatelessWidget {
                           ],
                         ),
                         child: ClipOval(
-                          child: Image(image: avatarProvider, fit: BoxFit.cover),
+                          child: Image(
+                            image: avatarProvider,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
 
@@ -203,7 +208,9 @@ class ProfileScreen extends StatelessWidget {
                             ),
 
                             // Change text color when pressed
-                            foregroundColor: WidgetStateProperty.resolveWith((states,) {
+                            foregroundColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
                               if (states.contains(WidgetState.pressed)) {
                                 return Colors.white.withValues(alpha: 0.75);
                               }
@@ -213,7 +220,10 @@ class ProfileScreen extends StatelessWidget {
                           onPressed: () {
                             Navigator.of(context).push(
                               ThreadsSheetRoute(
-                                builder: (_) => ProfileEditScreen(profileDataStore: profileDataStore),
+                                builder: (_) => ProfileEditScreen(
+                                  profileDataStore: profileDataStore,
+                                  homeDataStore: homeDataStore,
+                                ),
                               ),
                             );
                           },

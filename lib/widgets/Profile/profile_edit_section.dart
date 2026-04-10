@@ -12,7 +12,7 @@ class ProfileEditSection extends StatelessWidget {
   });
 
   final UserProfileEditView profile;
-  final void Function(String title, String newValue) onValueChanged;
+  final void Function(String title, dynamic newValue) onValueChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -79,10 +79,10 @@ class _EditField extends StatelessWidget {
   final String value;
   final double height;
   final bool tappable;
-  final void Function(String title, String newValue) onValueChanged;
+  final void Function(String title, dynamic newValue) onValueChanged;
 
   Future<void> handleTap(BuildContext context) async {
-    final result = await Navigator.of(context).push<String>(
+    final result = await Navigator.of(context).push(
       ThreadsSheetRoute(
         builder: (_) => InfoEditScreen(
           title: title,

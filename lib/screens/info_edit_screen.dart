@@ -6,11 +6,7 @@ import '../widgets/Profile/birth_time_edit_widget.dart';
 import '../widgets/Profile/birth_place_edit_widget.dart';
 
 class InfoEditScreen extends StatefulWidget {
-  const InfoEditScreen({
-    super.key,
-    required this.title,
-    required this.value,
-  });
+  const InfoEditScreen({super.key, required this.title, required this.value});
 
   final String title;
   final String value;
@@ -20,7 +16,7 @@ class InfoEditScreen extends StatefulWidget {
 }
 
 class _InfoEditScreenState extends State<InfoEditScreen> {
-  late String _editedValue;
+  dynamic _editedValue;
   bool _isDoneEnabled = false;
 
   @override
@@ -29,10 +25,7 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
     _editedValue = widget.value;
   }
 
-  void _onFieldChanged({
-    required String value,
-    required bool isValid,
-  }) {
+  void _onFieldChanged({required String value, required bool isValid}) {
     setState(() {
       _editedValue = value;
       _isDoneEnabled = isValid;
@@ -63,10 +56,18 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
         );
       case 'birth place':
         return BirthPlaceEditWidget(
-          initialValue: widget.value,
-          onChanged: _onFieldChanged,
+          initialValue: null, // or convert from existing data if needed
+          onChanged:
+              ({
+                required BirthPlaceEditSelection? place,
+                required bool isValid,
+              }) {
+                setState(() {
+                  _editedValue = place;
+                  _isDoneEnabled = isValid;
+                });
+              },
         );
-
       default:
         return const SizedBox.shrink();
     }
@@ -93,9 +94,7 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
             width: double.infinity,
             decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(10),
-              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
             ),
             child: Column(
               children: [
@@ -111,8 +110,9 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
                             overlayColor: WidgetStateProperty.all(
                               Colors.transparent,
                             ),
-                            foregroundColor:
-                                WidgetStateProperty.resolveWith((states) {
+                            foregroundColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
                               if (states.contains(WidgetState.pressed)) {
                                 return Colors.black.withValues(alpha: 0.45);
                               }
@@ -146,8 +146,9 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
                             overlayColor: WidgetStateProperty.all(
                               Colors.transparent,
                             ),
-                            foregroundColor:
-                                WidgetStateProperty.resolveWith((states) {
+                            foregroundColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
                               if (!_isDoneEnabled) return disabledColor;
                               if (states.contains(WidgetState.pressed)) {
                                 return activeColor.withValues(alpha: 0.45);
@@ -162,7 +163,9 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
                             ),
                           ),
                           onPressed: _isDoneEnabled
-                              ? () => Navigator.of(context).pop(_editedValue.trim())
+                              ? () => Navigator.of(
+                                  context,
+                                ).pop(_editedValue)
                               : null,
                           child: const Text('Done'),
                         ),
@@ -170,7 +173,7 @@ class _InfoEditScreenState extends State<InfoEditScreen> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
 
                 _buildEditContent(),
