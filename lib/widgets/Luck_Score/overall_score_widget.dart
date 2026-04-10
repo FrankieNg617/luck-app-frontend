@@ -12,7 +12,7 @@ class _OverallScoreWidgetState extends State<OverallScoreWidget>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _curve;
-  late final Animation<int> _count;
+  late Animation<int> _count;
 
   String getScoreLabel(int s) {
     if (s >= 90) return "Excellent";
@@ -21,26 +21,36 @@ class _OverallScoreWidgetState extends State<OverallScoreWidget>
     return "Take it easy";
   }
 
+  int get _clampedScore => widget.score.clamp(0, 100);
+
   @override
   void initState() {
     super.initState();
 
-    final s = widget.score.clamp(0, 100);
-
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1900), // ring + number timing
+      duration: const Duration(milliseconds: 1900),
     );
 
-    _curve = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    );
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
 
-    _count = IntTween(begin: 0, end: s).animate(_curve);
+    _count = IntTween(begin: 0, end: _clampedScore).animate(_curve);
 
-    // play once on entry
     _controller.forward(from: 0.0);
+  }
+
+  @override
+  void didUpdateWidget(covariant OverallScoreWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final oldScore = oldWidget.score.clamp(0, 100);
+    final newScore = widget.score.clamp(0, 100);
+
+    if (oldScore != newScore) {
+      _count = IntTween(begin: 0, end: newScore).animate(_curve);
+
+      _controller.forward(from: 0.0);
+    }
   }
 
   @override
@@ -51,7 +61,7 @@ class _OverallScoreWidgetState extends State<OverallScoreWidget>
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.score.clamp(0, 100);
+    final s = _clampedScore;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -60,31 +70,40 @@ class _OverallScoreWidgetState extends State<OverallScoreWidget>
           width: 128,
           height: 128,
           child: AnimatedBuilder(
-            animation: _curve,
+            animation: _controller,
             builder: (context, _) {
-              final t = _curve.value; // 0..1
+              final animatedScore = _count.value;
+              final animatedRingValue = s == 0
+                  ? 0.0
+                  : (_curve.value * (s / 100)).clamp(0.0, 1.0);
 
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  // ✅ OUTER RING (animated fill)
                   SizedBox(
                     width: 128,
                     height: 128,
                     child: CircularProgressIndicator(
-                      value: t,
+                      value: animatedRingValue,
                       strokeWidth: 8,
-                      backgroundColor: Colors.transparent,
+                      backgroundColor: const Color.fromARGB(
+                        255,
+                        60,
+                        60,
+                        60,
+                      ).withValues(alpha: 0.35),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        const Color.fromARGB(255, 189, 197, 144)
-                            .withValues(alpha: 1),
+                        const Color.fromARGB(
+                          255,
+                          189,
+                          197,
+                          144,
+                        ).withValues(alpha: 1),
                       ),
                     ),
                   ),
-
-                  // ✅ SCORE ONLY (no inner circle)
                   Text(
-                    '${_count.value}',
+                    '$animatedScore',
                     style: const TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.w800,

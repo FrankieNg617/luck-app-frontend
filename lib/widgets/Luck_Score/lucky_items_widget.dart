@@ -30,7 +30,7 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700), // speed
+      duration: const Duration(milliseconds: 700),
     );
 
     _curve = CurvedAnimation(
@@ -38,7 +38,22 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
       curve: Curves.easeOutCubic,
     );
 
-    _controller.forward(from: 0.0); // play once per widget creation
+    _controller.forward(from: 0.0);
+  }
+
+  @override
+  void didUpdateWidget(covariant LuckyItemsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final hasChanged =
+        oldWidget.food != widget.food ||
+        oldWidget.colour != widget.colour ||
+        oldWidget.time != widget.time ||
+        oldWidget.numbers.join(',') != widget.numbers.join(',');
+
+    if (hasChanged) {
+      _controller.forward(from: 0.0);
+    }
   }
 
   @override
@@ -52,23 +67,19 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
     return AnimatedBuilder(
       animation: _curve,
       builder: (context, _) {
-        final t = _curve.value; // 0..1
+        final t = _curve.value;
 
         return Transform.translate(
-          offset: Offset(0, (1 - t) * 35), // slide up
+          offset: Offset(0, (1 - t) * 35),
           child: Opacity(
-            opacity: t, // fade in
+            opacity: t,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 const gap = 12.0;
-
-                // This is just to compute responsive icon sizes
                 final half = (constraints.maxWidth - gap) / 2;
 
-                // ✅ responsive base size derived from tile width
                 final baseIcon = (half * 0.14).clamp(14.0, 26.0);
 
-                // Optional per-item tuning relative to base
                 final foodIcon = (baseIcon * 1.20).clamp(14.0, 28.0);
                 final numberIcon = (baseIcon * 1.05).clamp(14.0, 26.0);
                 final colourIcon = (baseIcon * 1.00).clamp(14.0, 26.0);
@@ -76,14 +87,14 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
 
                 return Column(
                   children: [
-                    // ===== Row 1: Food | Numbers (equal height) =====
                     IntrinsicHeight(
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Expanded(
                             child: _LuckyBox(
-                              iconAsset: 'assets/icons/food2.png',
+                              icon: Icons.restaurant,
+                              iconColor: FortuneTheme.coral,
                               category: 'Food',
                               value: widget.food,
                               iconSize: foodIcon,
@@ -92,7 +103,8 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
                           const SizedBox(width: gap),
                           Expanded(
                             child: _LuckyBox(
-                              iconAsset: 'assets/icons/number.png',
+                              icon: Icons.numbers,
+                              iconColor: FortuneTheme.gold,
                               category: 'Numbers',
                               value: widget.numbers.join(', '),
                               iconSize: numberIcon,
@@ -101,17 +113,15 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
                         ],
                       ),
                     ),
-
                     const SizedBox(height: gap),
-
-                    // ===== Row 2: Colour | Time (equal height) =====
                     IntrinsicHeight(
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Expanded(
                             child: _LuckyBox(
-                              iconAsset: 'assets/icons/colour.png',
+                              icon: Icons.palette,
+                              iconColor: FortuneTheme.sage,
                               category: 'Colour',
                               value: widget.colour,
                               iconSize: colourIcon,
@@ -120,7 +130,8 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
                           const SizedBox(width: gap),
                           Expanded(
                             child: _LuckyBox(
-                              iconAsset: 'assets/icons/time2.png',
+                              icon: Icons.schedule,
+                              iconColor: FortuneTheme.amber,
                               category: 'Time',
                               value: widget.time,
                               iconSize: timeIcon,
@@ -141,13 +152,15 @@ class _LuckyItemsWidgetState extends State<LuckyItemsWidget>
 }
 
 class _LuckyBox extends StatelessWidget {
-  final String iconAsset;
+  final IconData icon;
+  final Color iconColor;
   final String category;
   final String value;
   final double iconSize;
 
   const _LuckyBox({
-    required this.iconAsset,
+    required this.icon,
+    required this.iconColor,
     required this.category,
     required this.value,
     required this.iconSize,
@@ -156,15 +169,14 @@ class _LuckyBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: FortuneTheme.cardDecoration(), // ✅ each small box transparent
+      decoration: FortuneTheme.cardDecoration(),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // LEFT: text (value top, category below)
           Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center, // ✅ centers vertically
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -190,16 +202,12 @@ class _LuckyBox extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(width: 10),
-
-          // RIGHT: icon (vertically centered)
           Center(
-            child: Image.asset(
-              iconAsset,
-              width: iconSize,
-              height: iconSize,
-              fit: BoxFit.contain,
+            child: Icon(
+              icon,
+              size: iconSize,
+              color: iconColor.withValues(alpha: 0.95),
             ),
           ),
         ],

@@ -5,7 +5,11 @@ class DosDontsWidget extends StatefulWidget {
   final List<String> dos;
   final List<String> donts;
 
-  const DosDontsWidget({super.key, required this.dos, required this.donts});
+  const DosDontsWidget({
+    super.key,
+    required this.dos,
+    required this.donts,
+  });
 
   @override
   State<DosDontsWidget> createState() => _DosDontsWidgetState();
@@ -34,6 +38,19 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
   }
 
   @override
+  void didUpdateWidget(covariant DosDontsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final hasChanged =
+        oldWidget.dos.join('|') != widget.dos.join('|') ||
+        oldWidget.donts.join('|') != widget.donts.join('|');
+
+    if (hasChanged) {
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -41,7 +58,7 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
 
   double _responsiveIconSize(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final cardW = (w - 24) / 2; // padding-aware
+    final cardW = (w - 24) / 2;
     return (cardW * 0.12).clamp(16.0, 26.0);
   }
 
@@ -68,30 +85,30 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
                     Expanded(
                       child: _DoDontSection(
                         title: 'Suggest',
-                        iconAsset: 'assets/icons/dos.png',
+                        icon: Icons.check_circle,
+                        iconColor: FortuneTheme.sage,
                         iconSize: iconSize,
                         items: widget.dos,
                       ),
                     ),
-
-                    // ✅ divider (now has real height)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       child: Container(
                         width: 1,
-                        height: double.infinity, // ✅ important
-                        margin: const EdgeInsets.symmetric(vertical: 12), // ✅ not touching edges
+                        height: double.infinity,
+                        margin: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(999),
-                          color: const Color.fromARGB(255, 179, 164, 164).withValues(alpha: 0.35),
+                          color: const Color.fromARGB(255, 179, 164, 164)
+                              .withValues(alpha: 0.35),
                         ),
                       ),
                     ),
-
                     Expanded(
                       child: _DoDontSection(
                         title: 'Avoid',
-                        iconAsset: 'assets/icons/donts.png',
+                        icon: Icons.cancel,
+                        iconColor: FortuneTheme.coral,
                         iconSize: iconSize,
                         items: widget.donts,
                       ),
@@ -107,17 +124,17 @@ class _DosDontsWidgetState extends State<DosDontsWidget>
   }
 }
 
-/* ---------------- SECTION (LEFT / RIGHT) ---------------- */
-
 class _DoDontSection extends StatelessWidget {
   final String title;
-  final String iconAsset;
+  final IconData icon;
+  final Color iconColor;
   final double iconSize;
   final List<String> items;
 
   const _DoDontSection({
     required this.title,
-    required this.iconAsset,
+    required this.icon,
+    required this.iconColor,
     required this.iconSize,
     required this.items,
   });
@@ -127,15 +144,13 @@ class _DoDontSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
         Row(
           children: [
             const SizedBox(width: 10),
-            Image.asset(
-              iconAsset,
-              width: iconSize,
-              height: iconSize,
-              fit: BoxFit.contain,
+            Icon(
+              icon,
+              size: iconSize,
+              color: iconColor.withValues(alpha: 0.95),
             ),
             const SizedBox(width: 12),
             Text(
@@ -149,8 +164,6 @@ class _DoDontSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-
-        // Items
         ...items.map(
           (x) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
